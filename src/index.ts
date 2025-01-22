@@ -31,7 +31,7 @@ app.use(bodyParser.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Routes
 app.use('/cities', cityRoutes);
-app.use('/api/auth', authRoutes); // Add auth routes for authentication
+app.use('/auth', authRoutes); // Add auth routes for authentication
 
 // Error Handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

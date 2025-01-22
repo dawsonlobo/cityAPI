@@ -30,10 +30,6 @@ export const getAllCities = async (req: Request, res: Response): Promise<void> =
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Log the query and options for debugging
-    console.log("Query:", query);
-    console.log("Options:", options);
-
     const cities = await City.find(query, options.projection).skip(skip).limit(parseInt(limit)).sort(options.sort);
     const totalCities = await City.countDocuments(query);
 
@@ -93,7 +89,7 @@ export const addCity = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const existingCity = await City.findOne({ name });
+    const existingCity = await City.findOne({ name, isDeleted: false });
     if (existingCity) {
       res.status(400).json({ message: 'City name must be unique.' });
       return;
@@ -114,6 +110,7 @@ export const addCity = async (req: Request, res: Response): Promise<void> => {
       country,
       latitude,
       longitude,
+      isDeleted: false,
     });
 
     await newCity.save();
@@ -129,35 +126,48 @@ export const updateCity = async (req: Request, res: Response): Promise<void> => 
   const updates = req.body;
 
   try {
+    // Validate updates
     if (!updates || Object.keys(updates).length === 0) {
       res.status(400).json({ message: 'No updates provided.' });
       return;
     }
 
-    const updatedCity = await City.findByIdAndUpdate(id, { $set: updates }, { new: true, runValidators: true });
-    if (!updatedCity) {
-      res.status(404).json({ message: 'City not found.' });
+    // Find city by ID and check if it exists and is not deleted
+    const city = await City.findOne({ _id: id, isDeleted: false });
+    if (!city) {
+      res.status(404).json({ message: 'City not found or already deleted.' });
       return;
     }
 
-    res.json({ message: 'City updated successfully!', city: updatedCity });
+    // Apply updates
+    Object.assign(city, updates);
+    await city.save();
+
+    res.json({ message: 'City updated successfully!', city });
   } catch (error) {
+    console.error('Error updating city:', error);
     res.status(500).json({ error: 'Error updating city. Please try again later.' });
   }
 };
 
-// Delete a city
+
+// Soft delete a city
 export const deleteCity = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
 
   try {
-    const deletedCity = await City.findByIdAndDelete(id);
+    const deletedCity = await City.findOneAndUpdate(
+      { _id: id, isDeleted: false },
+      { $set: { isDeleted: true } },
+      { new: true }
+    );
+
     if (!deletedCity) {
-      res.status(404).json({ message: 'City not found.' });
+      res.status(404).json({ message: 'City not found or already deleted.' });
       return;
     }
 
-    res.json({ message: 'City deleted successfully!' });
+    res.json({ message: 'City marked as deleted successfully!' });
   } catch (error) {
     res.status(500).json({ error: 'Error deleting city. Please try again later.' });
   }

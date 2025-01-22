@@ -13,6 +13,7 @@ const router = Router();
  * @swagger
  * /cities/getall:
  *   post:
+ *     tags: ['City API']
  *     summary: Retrieve all cities
  *     requestBody:
  *       required: true
@@ -20,46 +21,75 @@ const router = Router();
  *         application/json:
  *           examples:
  *             example1:
- *               summary: Example with basic pagination and filtering
+ *               summary: Pagination example
  *               value:
- *                 page: '1'
- *                 limit: '10'
- *                 filter: { country: 'India' }
- *                 sort: 'name:asc'
- *                 search: 'New'
- *                 projection: 'name,country'
- *                 id: '63f2b5d6e3a4b2e34d123456'
- *             example2:
- *               summary: Example with advanced filtering and sorting
- *               value:
- *                 page: '2'
- *                 limit: '5'
- *                 filter: { population: { $gt: 1000000 } }
- *                 sort: 'population:desc'
- *                 search: 'Delhi'
- *                 projection: 'name,-population'
- *                 id: '63f2b5d6e3a4b2e34d123457'
- *             example3:
- *               summary: Example without any filters or sorting
- *               value:
- *                 page: '1'
- *                 limit: '20'
+ *                 pagination:
+ *                   page: '1'
+ *                   limit: '10'
  *                 filter: {}
  *                 sort: ''
  *                 search: ''
- *                 projection: 'name'
+ *                 projection: 'name,country'
+ *                 id: ''
+ *             example2:
+ *               summary: Filter example
+ *               value:
+ *                 pagination:
+ *                   page: '1'
+ *                   limit: '10'
+ *                 filter:
+ *                   country: 'India'
+ *                   population: { $gt: 1000000 }
+ *                 sort: ''
+ *                 search: ''
+ *                 projection: 'name,country'
+ *                 id: ''
+ *             example3:
+ *               summary: Sort example
+ *               value:
+ *                 pagination:
+ *                   page: '1'
+ *                   limit: '10'
+ *                 filter: {}
+ *                 sort: 'name:asc'
+ *                 search: ''
+ *                 projection: 'name,country'
+ *                 id: ''
+ *             example4:
+ *               summary: Projection example
+ *               value:
+ *                 pagination:
+ *                   page: '1'
+ *                   limit: '10'
+ *                 filter: {}
+ *                 sort: ''
+ *                 search: ''
+ *                 projection: 'name,country,population'
+ *                 id: ''
+ *             example5:
+ *               summary: Search example
+ *               value:
+ *                 pagination:
+ *                   page: '1'
+ *                   limit: '10'
+ *                 filter: {}
+ *                 sort: ''
+ *                 search: 'New Delhi'
+ *                 projection: 'name,country,population'
  *                 id: ''
  *           schema:
  *             type: object
  *             properties:
- *               page:
- *                 type: string
- *                 description: Page number for pagination (default is '1').
- *                 example: '1'
- *               limit:
- *                 type: string
- *                 description: Number of cities per page (default is '10').
- *                 example: '10'
+ *               pagination:
+ *                 type: object
+ *                 description: Pagination settings.
+ *                 properties:
+ *                   page:
+ *                     type: string
+ *                     example: '1'
+ *                   limit:
+ *                     type: string
+ *                     example: '10'
  *               filter:
  *                 type: object
  *                 description: Filter criteria for querying cities.
@@ -124,6 +154,7 @@ router.post('/getall', getAllCities);
  * @swagger
  * /cities/{id}:
  *   post:
+ *     tags: ['City API']
  *     summary: Retrieve a city by ID
  *     parameters:
  *       - name: id
@@ -144,11 +175,21 @@ router.post('/:id', getCityById);
  * @swagger
  * /cities:
  *   post:
+ *     tags: ['City API']
  *     summary: Add a new city
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
+ *           examples:
+ *             example1:
+ *               summary: Update city details
+ *               value:
+ *                 name: ""
+ *                 population: 
+ *                 country: ""
+ *                 latitude: "123.456"
+ *                 longitude: "78.910"
  *           schema:
  *             type: object
  *             properties:
@@ -168,6 +209,7 @@ router.post('/', addCity);
  * @swagger
  * /cities/{id}:
  *   put:
+ *     tags: ['City API']
  *     summary: Update a city by ID
  *     parameters:
  *       - name: id
@@ -201,6 +243,7 @@ router.put('/:id', updateCity);
  * @swagger
  * /cities/{id}:
  *   delete:
+ *     tags: ['City API']
  *     summary: Delete a city by ID
  *     parameters:
  *       - name: id
