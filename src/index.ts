@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes';
 import { initializePassport } from './passport/bearer';
 import { swaggerSpec, swaggerUi } from './swagger';
 import userRoutes from './routes/user';
+import stateRoutes from './routes/stateRoutes'
 import {CONFIG}  from  './config/config'
 // Load environment variables
 dotenv.config();
@@ -22,6 +23,7 @@ import cityRoutes from './routes/cityRoutes';
 
 // Use routes
 app.use('/cities', cityRoutes);
+app.use('/states',stateRoutes);
 app.use('/auth', authRoutes);
 // Serve Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

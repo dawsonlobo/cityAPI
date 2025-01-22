@@ -18,10 +18,14 @@ const swaggerOptions: swaggerJSDoc.Options = {
       {
         name: 'cities',  // This will replace 'default'
         description: 'API endpoints for cities'
+      },
+      {
+        name: 'states',  // This will replace 'default'
+        description: 'API endpoints for states'
       }
     ]
   },
-  apis: ['./src/routes/cityRoutes.ts'],
+  apis: ['./src/routes/*.ts'],
 };
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
