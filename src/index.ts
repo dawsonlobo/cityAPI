@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import cityRoutes from './routes/cityRoutes';
+import stateRoutes from './routes/stateRoutes';
 import authRoutes from './routes/authRoutes';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -31,6 +32,7 @@ app.use(bodyParser.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Routes
 app.use('/cities', cityRoutes);
+app.use('/states', stateRoutes); 
 app.use('/auth', authRoutes); // Add auth routes for authentication
 
 // Error Handling

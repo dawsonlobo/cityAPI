@@ -19,6 +19,10 @@ const swaggerOptions: swaggerJSDoc.Options = {
       {
         name: 'City API',
         description: 'Operations related to city management'
+      },
+      {
+        name: 'State API',
+        description: 'Operations related to city management'
       }
     ],
     // You can also set a default tag for all operations
