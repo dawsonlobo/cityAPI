@@ -26,12 +26,68 @@ import { CustomRequest } from '../interfaces/customRequest';
 // };
 
 
+// export const getAllCities = async (req: Request, res: Response, next: NextFunction) => {
+//   try {
+//     const { search, filters, fields, page = 1, limit = 10, sort } = req.body;
+
+//     console.log('rrvrvrvrvr'+JSON.stringify(req.body));
+    
+    
+//     // Sanitize and validate pagination parameters
+//     const pageNumber = Math.max(1, parseInt(page as any)); // Ensure page is at least 1
+//     const limitNumber = Math.max(1, parseInt(limit as any)); // Ensure limit is at least 1
+    
+//     // Build the search criteria for city names
+//     const searchCriteria = search ? { name: { $regex: search, $options: 'i' } } : {};
+    
+//     // Combine search and filter criteria
+//     const filterCriteria = { ...searchCriteria, ...filters };
+
+//     // Build the projection object to include only specified fields
+// // Ensure fields is parsed as an array
+// const projection = Array.isArray(fields)
+//   ? fields.reduce((acc: any, field: string) => {
+//       acc[field] = 1;
+//       return acc;
+//     }, { _id: 0 }) 
+//   : { _id: 0 }; // Default to excluding _id if no fields are provided
+
+
+//     // Calculate the number of documents to skip for pagination
+//     const skip = (pageNumber - 1) * limitNumber;
+
+//     // Use the provided sort criteria or default to sorting by 'name'
+//     const sortCriteria = sort || { name: 1 }; // Default sort by name in ascending order
+
+//     // Fetch the total count of matching documents
+//     const totalCount = await City.countDocuments(filterCriteria);
+    
+//     // Fetch the cities with pagination, projection, and sorting
+//     const cities = await City.find(filterCriteria, projection)
+//       .sort(sortCriteria)
+//       .skip(skip)
+//       .limit(limitNumber);
+
+//     // Return the response with pagination metadata
+//     res.json({
+//       metadata: {
+//         totalCount,
+//         currentPage: pageNumber,
+//         totalPages: Math.ceil(totalCount / limitNumber),
+//         pageSize: cities.length,
+//       },
+//       cities,
+//     });
+//   } catch (err) {
+//     next(err); // Pass errors to error handling middleware
+//   }
+// };
+
 export const getAllCities = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { search, filters, fields, page = 1, limit = 10, sort } = req.body;
 
-    console.log('rrvrvrvrvr'+JSON.stringify(req.body));
-    
+    console.log('Received request body: ' + JSON.stringify(req.body));
     
     // Sanitize and validate pagination parameters
     const pageNumber = Math.max(1, parseInt(page as any)); // Ensure page is at least 1
@@ -44,20 +100,25 @@ export const getAllCities = async (req: Request, res: Response, next: NextFuncti
     const filterCriteria = { ...searchCriteria, ...filters };
 
     // Build the projection object to include only specified fields
-// Ensure fields is parsed as an array
-const projection = Array.isArray(fields)
-  ? fields.reduce((acc: any, field: string) => {
-      acc[field] = 1;
-      return acc;
-    }, { _id: 0 }) 
-  : { _id: 0 }; // Default to excluding _id if no fields are provided
-
+    const projection = Array.isArray(fields)
+      ? fields.reduce((acc: any, field: string) => {
+          acc[field] = 1;
+          return acc;
+        }, { _id: 0 }) 
+      : { _id: 0 }; // Default to excluding _id if no fields are provided
 
     // Calculate the number of documents to skip for pagination
     const skip = (pageNumber - 1) * limitNumber;
 
     // Use the provided sort criteria or default to sorting by 'name'
-    const sortCriteria = sort || { name: 1 }; // Default sort by name in ascending order
+    const sortCriteria = sort && Array.isArray(sort) 
+      ? sort.reduce((acc: any, item: any) => {
+          const field = item[0]; // field name (e.g., "population")
+          const order = item[1]; // sort order (1 or -1)
+          acc[field] = order;
+          return acc;
+        }, {})
+      : { name: 1 }; // Default to sorting by name in ascending order
 
     // Fetch the total count of matching documents
     const totalCount = await City.countDocuments(filterCriteria);
@@ -82,7 +143,6 @@ const projection = Array.isArray(fields)
     next(err); // Pass errors to error handling middleware
   }
 };
-
 
 
 // Get city by ID with projection
@@ -210,14 +270,25 @@ export const getCityById = async (req: CustomRequest, res: Response, next: NextF
 
 // Assuming you've defined a custom request type
 
-// Update a city
 export const updateCity = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    // Find the city by ID and update the isDeleted field to true
+    const updateData = req.body; // Get the update data from the request body
+
+    // Validate that at least one field is being updated
+    if (!updateData || Object.keys(updateData).length === 0) {
+      req.customReq = {
+        isSuccessful: false,
+        data: null,
+        message: 'No valid fields provided for update.',
+      };
+      return next(); // Pass control to the next middleware
+    }
+
+    // Find the city by ID and update the fields provided in the body
     const updatedCity = await City.findByIdAndUpdate(
       req.params.id,
-      { isDeleted: true }, // Mark the city as deleted
-      { new: true } // Return the updated city document
+      updateData,
+      { new: true, runValidators: true } // Return the updated document and run schema validators
     );
 
     if (!updatedCity) {
@@ -232,7 +303,7 @@ export const updateCity = async (req: CustomRequest, res: Response, next: NextFu
     req.customReq = {
       isSuccessful: true,
       data: updatedCity,
-      message: 'City marked as deleted successfully.',
+      message: 'City updated successfully.',
     };
     next(); // Proceed to the next middleware (success handler)
   } catch (err) {

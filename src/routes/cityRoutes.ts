@@ -15,6 +15,7 @@ const router = Router();
  * @swagger
  * /cities/getAll:
  *   post:
+ *     tags: ['cities'] 
  *     summary: Get all cities with pagination, filters, and projections
  *     requestBody:
  *       required: true
@@ -47,7 +48,7 @@ const router = Router();
  *                summary: Example with sorting
  *                value:
  *                  sort:
- *                    - field: "population"
+ *                      field: "population"
  *                      order: -1
  *           schema:
  *             type: object
@@ -130,8 +131,9 @@ router.post('/getAll', getAllCities, exitPoint);
 
 /**
  * @swagger
- * /cities/{id}/projection:
+ * /cities/{id}/:
  *   post:
+ *     tags: ['cities'] 
  *     summary: Get a city with projection
  *     parameters:
  *       - in: path
@@ -154,6 +156,7 @@ router.post('/:id', getCityWithProjection, exitPoint);
  * @swagger
  * /cities:
  *   post:
+ *     tags: ['cities'] 
  *     summary: Add a new city
  *     requestBody:
  *       required: true
@@ -168,17 +171,69 @@ router.post('/:id', getCityWithProjection, exitPoint);
  *                 type: string
  *               population:
  *                 type: number
+ *           examples:
+ *             cityExample1:
+ *               summary: Adding a city in the USA
+ *               value:
+ *                 name: "San Francisco"
+ *                 state: "California"
+ *                 population: 883305
+ *             cityExample2:
+ *               summary: Adding a city in India
+ *               value:
+ *                 name: "Mumbai"
+ *                 state: "Maharashtra"
+ *                 population: 20411274
  *     responses:
  *       201:
  *         description: City added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccessful:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     state:
+ *                       type: string
+ *                     population:
+ *                       type: number
+ *                 message:
+ *                   type: string
+ *             examples:
+ *               successResponse:
+ *                 summary: Successful city addition
+ *                 value:
+ *                   isSuccessful: true
+ *                   data:
+ *                     id: "63d88f5e6b7b3e001c27b112"
+ *                     name: "San Francisco"
+ *                     state: "California"
+ *                     population: 883305
+ *                   message: "City added successfully"
+ *               errorResponse:
+ *                 summary: Error example
+ *                 value:
+ *                   isSuccessful: false
+ *                   data: null
+ *                   message: "City already exists"
  */
 router.post('/', addCity, exitPoint);
+
 
 /**
  * @swagger
  * /cities/{id}:
  *   get:
  *     summary: Get a city by ID
+ *     tags: ['cities'] 
  *     parameters:
  *       - in: path
  *         name: id
@@ -225,6 +280,7 @@ router.get('/:id', getCityById, exitPoint);
  * @swagger
  * /cities/{id}:
  *   put:
+ *     tags: ['cities'] 
  *     summary: Update a city's information
  *     parameters:
  *       - in: path
@@ -246,10 +302,30 @@ router.get('/:id', getCityById, exitPoint);
  *                 type: string
  *               population:
  *                 type: number
+ *           examples:
+ *             cityUpdateExample:
+ *               summary: Updating city information
+ *               value:
+ *                 name: "New York"
+ *                 country: "New York"
+ *                 population: 8419600
+ *             cityUpdateExample2:
+ *               summary: Update with deletion flag
+ *               value:
+ *                 isDeleted: true
  *     responses:
  *       200:
  *         description: City updated successfully
+ *         content:
+ *           application/json:
+ *             examples:
+ *               success:
+ *                 summary: Example of successful city update
+ *                 value:
+ *                   message: "City updated successfully"
  */
 router.put('/:id', updateCity, exitPoint);
+
+
 
 export default router;

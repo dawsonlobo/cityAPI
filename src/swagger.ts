@@ -1,8 +1,6 @@
-// swagger.ts
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
-// Define the Swagger specification
 const swaggerOptions: swaggerJSDoc.Options = {
   definition: {
     openapi: '3.0.0',
@@ -16,9 +14,14 @@ const swaggerOptions: swaggerJSDoc.Options = {
         url: 'http://localhost:3000',
       },
     ],
+    tags: [
+      {
+        name: 'cities',  // This will replace 'default'
+        description: 'API endpoints for cities'
+      }
+    ]
   },
-  // Path to the API specs
-  apis: ['./src/routes/*.ts'], // Add your routes directory
+  apis: ['./src/routes/cityRoutes.ts'],
 };
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
