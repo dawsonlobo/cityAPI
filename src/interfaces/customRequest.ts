@@ -2,7 +2,7 @@ import { Request } from 'express';
 
 export interface CustomRequest extends Request {
   customReq?: {
-    isSuccessful: boolean;
+    statusCode: number,
     data: any;
     message: string;
   };

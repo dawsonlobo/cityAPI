@@ -1,51 +1,23 @@
-// import { Request, Response, NextFunction } from 'express';
-// import { CustomRequest } from '../interfaces/customRequest'; // Import the CustomRequest interface
-
-// export const exitPoint = (req: CustomRequest, res: Response, next: NextFunction): void => {
-//   const { isSuccessful, data, message } = req.customReq || {};
-
-//   if (isSuccessful !== undefined) {
-//     res.status(isSuccessful ? 200 : 400).json({
-//       isSuccessful,
-//       data,
-//       message,
-//     });
-//   } else {
-//     res.status(500).json({
-//       isSuccessful: false,
-//       data: null,
-//       message: 'Unknown error occurred.',
-//     });
-//   }
-// };
 import { Request, Response, NextFunction } from 'express';
 import { CustomRequest } from '../interfaces/customRequest'; // Import the CustomRequest interface
 
 export const exitPoint = (req: CustomRequest, res: Response, next: NextFunction): void => {
   // Check if customReq exists before destructuring
   if (req.customReq) {
-    const { isSuccessful, data, message } = req.customReq;
+    const { data, message } = req.customReq;  // Destructure only necessary fields
 
-    // Send response based on isSuccessful flag
-    if (isSuccessful !== undefined) {
-      res.status(isSuccessful ? 200 : 400).json({
-        isSuccessful,
-        data,
-        message,
-      });
-    } else {
-      res.status(500).json({
-        isSuccessful: false,
-        data: null,
-        message: 'Unknown error occurred.',
-      });
-    }
+    // If customReq exists, respond with 200 status code
+    res.status(200).json({
+      statusCode: 200,  // Status code for success
+      data,  // Send the data
+      message,  // Send the message
+    });
   } else {
-    // If customReq doesn't exist, send a generic error response
-    res.status(500).json({
-      isSuccessful: false,
-      data: null,
-      message: 'No customReq data found in the request.',
+    // If customReq is missing, send a 400 response
+     res.status(400).json({
+      statusCode: 400,  // Status code for error
+      data: null,  // No data
+      message: 'customReq data is missing in the request.',
     });
   }
 };
