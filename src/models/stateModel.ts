@@ -15,7 +15,8 @@ const stateSchema: Schema = new Schema({
   capital: {type:String},
   isDeleted:{type:Boolean,default:false}
 },{
-    timestamps: true
+    timestamps: true,
+    versionKey: false
 });
 
 export default mongoose.model<IState>('states', stateSchema);
