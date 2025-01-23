@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { body, validationResult } from 'express-validator';
+// Import body and validationResult directly
 import {
   getAllStates,
   getStateById,
@@ -6,6 +8,7 @@ import {
   updateState,
   deleteState,
 } from '../controllers/stateController';
+import { validateState } from '../middleware/state';
 
 const router = Router();
 
@@ -208,8 +211,37 @@ router.post('/:id', getStateById);
  *       201:
  *         description: State added successfully
  */
-router.post('/', addState);
+// In routes file
+router.post(
+  '/',
+  [
+    body('name')
+      .trim()
+      .isString()
+      .notEmpty()
+      .withMessage('Name is required and must be a non-empty string')
+      .matches(/^[A-Za-z\s]+$/)
+      .withMessage('Name should only contain letters and spaces'),
 
+    body('population')
+      .isInt({ min: 1 })
+      .withMessage('Population must be an integer greater than 0'),
+
+    body('gdp')
+      .optional()
+      .isNumeric()
+      .isFloat({ min: 0 })
+      .withMessage('GDP must be a valid non-negative number'),
+
+    body('capital')
+      .trim()
+      .isString()
+      .notEmpty()
+      .withMessage('Capital is required and must be a non-empty string'),
+  ],
+  validateRequest,  // Middleware to handle validation errors
+  addState         // Proceed with adding the state if validation passes
+);
 /**
  * @swagger
  * /states/{id}:

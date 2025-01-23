@@ -83,41 +83,49 @@ export const addState = async (req: Request, res: Response): Promise<void> => {
   const { name, population, capital, gdp } = req.body;
 
   try {
-    if (!name || !population || !capital || !gdp) {
-      res.status(400).json({ message: 'All fields are required: name, population, country, capital, area.' });
-      return;
-    }
+    // Check if state already exists (case-insensitive)
+    const existingState = await State.findOne({ 
+      name: { $regex: `^${name}$`, $options: 'i' }, 
+      isDeleted: false 
+    });
 
-    const existingState = await State.findOne({ name, isDeleted: false });
     if (existingState) {
-      res.status(400).json({ message: 'State name must be unique.' });
+      res.status(409).json({ message: 'State already exists' });
       return;
     }
 
+    // Generate unique state ID
     const counter = await Counter.findOneAndUpdate(
       { name: 'state' },
       { $inc: { stateId: 1 } },
       { new: true, upsert: true }
     );
 
-    if (!counter) throw new Error('Failed to generate state ID');
+    if (!counter) {
+      res.status(500).json({ message: 'Failed to generate state ID' });
+      return;
+    }
 
+    // Create new state
     const newState = new State({
       _id: counter.stateId,
       name,
       population,
       capital,
       gdp,
-      isDeleted: false,
+      isDeleted: false
     });
 
     await newState.save();
-    res.status(201).json({ message: 'State added successfully!', state: newState });
+    res.status(201).json({ 
+      message: 'State added successfully', 
+      state: newState 
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Error adding state. Please try again later.' });
+    console.error('State creation error:', error);
+    res.status(500).json({ message: 'Failed to create state' });
   }
 };
-
 // Update a state
 export const updateState = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
