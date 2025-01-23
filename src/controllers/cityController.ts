@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import { City } from '../models/cityModel';
 import { Counter } from '../models/counterModel';
-
+import { State } from '../models/stateModel';
 // Get all cities
 export const getAllCities = async (req: Request, res: Response): Promise<void> => {
-  const { page = '1', limit = '10', filter = {}, sort = '', search = '', projection = '', id } = req.body;
+  const { page = '1', limit = '40', filter = {}, sort = '', search = '', projection = '', id } = req.body;
 
   const query: Record<string, any> = {};
   const options: Record<string, any> = {};
@@ -23,14 +23,40 @@ export const getAllCities = async (req: Request, res: Response): Promise<void> =
       }, {});
     }
 
+    let sortObj: Record<string, 1 | -1> = {};
     if (sort) {
       const [key, order] = sort.split(':');
-      options.sort = { [key]: order === 'desc' ? -1 : 1 };
+      sortObj[key] = order === 'desc' ? -1 : 1;
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const cities = await City.find(query, options.projection).skip(skip).limit(parseInt(limit)).sort(options.sort);
+    const cities = await City.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'states', // Collection name of the State model
+          localField: 'stateId',
+          foreignField: '_id',
+          as: 'stateDetails', // Add state details to this key
+        },
+      },
+      { 
+        $unwind: { 
+          path: '$stateDetails', 
+          preserveNullAndEmptyArrays: true // Ensures cities with deleted states still appear
+        },
+      },
+      {
+        $addFields: {
+          stateDeleted: { $ifNull: ['$stateDetails.isDeleted', true] }, // Add a field to indicate if the state is deleted
+        },
+      },
+      ...(sort ? [{ $sort: sortObj }] : []),
+      { $skip: skip },
+      { $limit: parseInt(limit) },
+    ]);
+
     const totalCities = await City.countDocuments(query);
 
     res.json({
@@ -48,6 +74,7 @@ export const getAllCities = async (req: Request, res: Response): Promise<void> =
 
 
 // Get city by ID
+// Get city by ID with state details and optional projection
 export const getCityById = async (req: Request, res: Response): Promise<void> => {
   try {
     const cityId = parseInt(req.params.id);
@@ -58,43 +85,91 @@ export const getCityById = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const pipeline: any[] = [{ $match: { _id: cityId } }];
+    const pipeline: any[] = [
+      { $match: { _id: cityId, isDeleted: false } }, // Ensure the city is not deleted
+      {
+        $lookup: {
+          from: 'states', // State collection name
+          localField: 'stateId',
+          foreignField: '_id',
+          as: 'stateDetails', // Add state details to this key
+          pipeline: [
+            { $match: { isDeleted: { $ne: true } } } // Only include states that are not deleted
+          ]
+        },
+      },
+      { $unwind: { path: '$stateDetails', preserveNullAndEmptyArrays: true } }, // Unwind the state details to get a single state object
+    ];
+
+    // If projection is provided in the request, add it to the pipeline
     if (Array.isArray(project) && project.length > 0) {
-      const projection: Record<string, number> = { _id: 1 };
+      const projection: Record<string, number> = { _id: 1 }; // Always include _id
       project.forEach((field: string) => {
-        projection[field] = 1;
+        projection[field] = 1; // Add other fields specified in the request
       });
       pipeline.push({ $project: projection });
     }
 
     const city = await City.aggregate(pipeline);
+
     if (city.length === 0) {
-      res.status(404).json({ message: 'City not found' });
+      res.status(404).json({ message: 'City not found or state is deleted.' });
       return;
     }
 
     res.json({ city: city[0] });
   } catch (error) {
+    console.error('Error fetching city by ID:', error);
     res.status(500).json({ error: 'Error fetching city by ID. Please try again later.' });
   }
 };
 
+
 // Add a new city
 export const addCity = async (req: Request, res: Response): Promise<void> => {
-  const { name, population, country, latitude, longitude } = req.body;
+  const { name, population, country, latitude, longitude, stateId } = req.body;
 
   try {
+    // Validate required fields
     if (!name || !population || !country || !latitude || !longitude) {
       res.status(400).json({ message: 'All fields are required: name, population, country, latitude, longitude.' });
       return;
     }
 
-    const existingCity = await City.findOne({ name, isDeleted: false });
+    // Convert latitude and longitude to numbers
+    const lat = parseFloat(latitude);
+    const lon = parseFloat(longitude);
+
+    if (isNaN(lat) || isNaN(lon)) {
+      res.status(400).json({ message: 'Latitude and Longitude must be valid numbers.' });
+      return;
+    }
+
+    // Check if the city already exists
+    const existingCity = await City.findOne({ name });
     if (existingCity) {
       res.status(400).json({ message: 'City name must be unique.' });
       return;
     }
 
+    // If a stateId is provided, validate the state
+    let stateIdNum = null;
+    if (stateId) {
+      stateIdNum = Number(stateId); // Convert stateId to a number
+
+      if (isNaN(stateIdNum)) {
+        res.status(400).json({ message: 'Invalid state ID format. stateId must be a number.' });
+        return;
+      }
+
+      const state = await State.findOne({ _id: stateIdNum, isDeleted: false });
+      if (!state) {
+        res.status(400).json({ message: 'Invalid state ID or the state is deleted.' });
+        return;
+      }
+    }
+
+    // Generate city ID
     const counter = await Counter.findOneAndUpdate(
       { name: 'city' },
       { $inc: { cityId: 1 } },
@@ -103,31 +178,38 @@ export const addCity = async (req: Request, res: Response): Promise<void> => {
 
     if (!counter) throw new Error('Failed to generate city ID');
 
+    // Create the new city object
     const newCity = new City({
       _id: counter.cityId,
       name,
       population,
       country,
-      latitude,
-      longitude,
+      latitude: lat,
+      longitude: lon,
+      stateId: stateIdNum, // Set stateId as number (null if not provided)
       isDeleted: false,
     });
 
+    // Save the city to the database
     await newCity.save();
+
     res.status(201).json({ message: 'City added successfully!', city: newCity });
   } catch (error) {
+    console.error('Error adding city:', error);
     res.status(500).json({ error: 'Error adding city. Please try again later.' });
   }
 };
 
+
+
 // Update a city
 export const updateCity = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
-  const updates = req.body;
+  const { stateId, name, population, country, latitude, longitude } = req.body;
 
   try {
-    // Validate updates
-    if (!updates || Object.keys(updates).length === 0) {
+    // Validate if updates are provided
+    if (!req.body || Object.keys(req.body).length === 0) {
       res.status(400).json({ message: 'No updates provided.' });
       return;
     }
@@ -139,7 +221,26 @@ export const updateCity = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Apply updates
+    // If stateId is provided, validate if the state exists and is not deleted
+    if (stateId) {
+      const state = await State.findOne({ _id: stateId, isDeleted: false });
+      if (!state) {
+        res.status(400).json({ message: 'The specified state does not exist or is deleted.' });
+        return;
+      }
+    }
+
+    // Prepare the update object
+    const updates: any = {
+      name: name || city.name,
+      population: population || city.population,
+      country: country || city.country,
+      latitude: latitude || city.latitude,
+      longitude: longitude || city.longitude,
+      stateId: stateId || city.stateId,  // If stateId is provided, update it
+    };
+
+    // Apply updates to the city
     Object.assign(city, updates);
     await city.save();
 
@@ -149,6 +250,7 @@ export const updateCity = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ error: 'Error updating city. Please try again later.' });
   }
 };
+
 
 
 // Soft delete a city

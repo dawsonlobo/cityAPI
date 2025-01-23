@@ -190,6 +190,7 @@ router.post('/:id', getCityById);
  *                 country: ""
  *                 latitude: "123.456"
  *                 longitude: "78.910"
+ *                 stateId: "NY"
  *           schema:
  *             type: object
  *             properties:

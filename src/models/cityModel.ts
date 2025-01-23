@@ -7,6 +7,7 @@ export interface ICity extends Document {
   country: string;
   latitude: number;
   longitude: number;
+  stateId: number | null;
   isDeleted:boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -19,6 +20,7 @@ const citySchema = new Schema<ICity>({
   country: { type: String, required: true },
   latitude: { type: Number, required: true },
   longitude: { type: Number, required: true },
+  stateId: { type: Number, ref: 'State', required: false }, // Reference to State
   isDeleted: {type: Boolean, default: false}
 }, { timestamps: true });
 
