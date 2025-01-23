@@ -329,12 +329,48 @@ export const getstate = async (req: any, res: any) => {
 // Get all cities with state details
 
 
+// export const getAllstates = async (req: any, res: any) => {
+//   try {
+//     const cities = await City.aggregate([
+//       { 
+//         $match: { isDeleted: false } // Only include cities that are not marked as deleted
+//       },
+//       {
+//         $addFields: {
+//           isValidStateId: {
+//             $cond: {
+//               if: { $regexMatch: { input: { $toString: "$stateId" }, regex: /^[0-9a-fA-F]{24}$/ } },
+//               then: true,
+//               else: false
+//             }
+//           }
+//         }
+//       },
+//       {
+//         $match: { isValidStateId: true } // Only include cities with valid stateId
+//       },
+//       {
+//         $lookup: {
+//           from: "states", // The 'states' collection
+//           localField: "stateId", // The reference field in 'City'
+//           foreignField: "_id", // The matching field in 'State'
+//           as: "stateDetails", // Alias for state data
+//         },
+//       },
+//       { $unwind: "$stateDetails" }, // Unwind to get state details as an object, not an array
+//     ]);
+
+//     // Return the list of cities with their state details
+//     res.status(200).json(cities); // Send all cities with state data
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Error fetching cities", error });
+//   }
+// };
 export const getAllstates = async (req: any, res: any) => {
   try {
     const cities = await City.aggregate([
-      { 
-        $match: { isDeleted: false } // Only include cities that are not marked as deleted
-      },
+      { $match: { isDeleted: false } },
       {
         $addFields: {
           isValidStateId: {
@@ -345,25 +381,21 @@ export const getAllstates = async (req: any, res: any) => {
             }
           }
         }
-      },
-      {
-        $match: { isValidStateId: true } // Only include cities with valid stateId
-      },
+      }
+      ,
       {
         $lookup: {
-          from: "states", // The 'states' collection
-          localField: "stateId", // The reference field in 'City'
-          foreignField: "_id", // The matching field in 'State'
-          as: "stateDetails", // Alias for state data
-        },
+          from: "states",
+          localField: "stateId",
+          foreignField: "_id",
+          as: "stateDetails"
+        }
       },
-      { $unwind: "$stateDetails" }, // Unwind to get state details as an object, not an array
+      { $unwind: "$stateDetails" }
     ]);
-
-    // Return the list of cities with their state details
-    res.status(200).json(cities); // Send all cities with state data
+    
+    res.status(200).json(cities);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Error fetching cities", error });
   }
 };

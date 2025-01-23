@@ -420,7 +420,8 @@ router.get('/:id/stateDetails',getstate, exitPoint);
  *                 }
  *               ]
  */
-router.post('/state',getAllstates, exitPoint);/**
+router.post('/state',getAllstates, exitPoint);
+/**
 * @swagger
 * /cities/{id}/updateJoin:
 *   put:
