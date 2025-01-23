@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import City from '../models/cityModel';
 import { CustomRequest } from '../interfaces/customRequest';
+import State from '../models/stateModel'; // Assuming the State model is defined in this file
 
 // Get all cities with optional pagination, sorting, and filters
 export const getAllCities = async (req: Request, res: Response, next: NextFunction) => {
@@ -258,5 +259,111 @@ export const deleteCity = async (req: CustomRequest, res: Response, next: NextFu
       message: 'Something went wrong!',
     };
     next(err);
+  }
+};
+
+
+
+// Update city with stateId validation // Adjust with actual path
+// Adjust with actual path
+export const updateCitys = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { stateId, ...updateData } = req.body;
+    const { id: cityId } = req.params; // Get cityId from URL params
+
+    // Log the cityId to verify it's being passed correctly
+    console.log('City ID from URL:', cityId);
+
+    // Check if stateId exists in the State collection
+    const stateExists = await State.findById(stateId);
+    if (!stateExists) {
+      res.status(400).json({ message: "Invalid stateId provided." });
+    }
+
+    // Check if the cityId exists
+    const cityExists = await City.findById(cityId);
+    if (!cityExists) {
+      console.log('City not found with ID:', cityId); // Log if city is not found
+       res.status(404).json({ message: "City not found." });
+    }
+
+    // If the stateId exists, proceed to update the city record
+    const updatedCity = await City.findByIdAndUpdate(
+      cityId, 
+      { 
+        ...updateData, 
+        stateId: new mongoose.Types.ObjectId(stateId) // Set the new stateId
+      },
+      { new: true } // Return the updated city
+    );
+
+    // Respond with the updated city details
+    res.status(200).json(updatedCity);
+  } catch (error) {
+    console.error(error); // Log the error for debugging
+    res.status(500).json({ message: "Error updating city", error });
+  }
+};
+//[if u use get for getone ide is passed in parameter else in body]
+export const getstate = async (req: any, res: any) => {
+  try {
+    const { id } = req.params; // Use 'id' instead of 'cityId'
+    console.log('Received cityId:', id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid cityId format." });
+    }
+    const city = await City.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(id), isDeleted: false } },
+      { $lookup: { from: "states", localField: "stateId", foreignField: "_id", as: "stateDetails" } },
+      { $unwind: "$stateDetails" }
+    ]);
+    if (!city.length) {
+      return res.status(404).json({ message: "City not found." });
+    }
+    res.status(200).json(city[0]);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching city", error });
+  }
+};
+
+// Get all cities with state details
+
+
+export const getAllstates = async (req: any, res: any) => {
+  try {
+    const cities = await City.aggregate([
+      { 
+        $match: { isDeleted: false } // Only include cities that are not marked as deleted
+      },
+      {
+        $addFields: {
+          isValidStateId: {
+            $cond: {
+              if: { $regexMatch: { input: { $toString: "$stateId" }, regex: /^[0-9a-fA-F]{24}$/ } },
+              then: true,
+              else: false
+            }
+          }
+        }
+      },
+      {
+        $match: { isValidStateId: true } // Only include cities with valid stateId
+      },
+      {
+        $lookup: {
+          from: "states", // The 'states' collection
+          localField: "stateId", // The reference field in 'City'
+          foreignField: "_id", // The matching field in 'State'
+          as: "stateDetails", // Alias for state data
+        },
+      },
+      { $unwind: "$stateDetails" }, // Unwind to get state details as an object, not an array
+    ]);
+
+    // Return the list of cities with their state details
+    res.status(200).json(cities); // Send all cities with state data
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching cities", error });
   }
 };

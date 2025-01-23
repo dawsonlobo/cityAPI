@@ -4,10 +4,13 @@ import {
   getCityById, 
   getCityWithProjection, 
   updateCity, 
-  addCity 
+  addCity ,
+  getAllstates,
+  getstate,
+  updateCitys
+
 } from '../controllers/cityController';
 import { exitPoint } from '../middleware/exitPoint';
-//import passport from 'passport';
 
 const router = Router();
 
@@ -325,6 +328,182 @@ router.get('/:id', getCityById, exitPoint);
  *                   message: "City updated successfully"
  */
 router.put('/:id', updateCity, exitPoint);
+
+/**
+ * @swagger
+ * /cities/{id}/stateDetails:
+ *   get:
+ *     tags: ['cities']
+ *     summary: Get city details along with its state details
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the city
+ *     responses:
+ *       200:
+ *         description: City details with state information
+ *         content:
+ *           application/json:
+ *             example:
+ *               {
+ *                 "id": "67920b929150bbf9ff76e336",
+ *                 "name": "City1",
+ *                 "population": 500000,
+ *                 "stateDetails": {
+ *                   "id": "60c72b2f9b1d8c3f8d07f1f0",
+ *                   "name": "State1",
+ *                   "country": "Country1",
+ *                   "population": 2000000,
+ *                   "gdp": 50000,
+ *                   "capital": "Capital1"
+ *                 }
+ *               }
+ *       404:
+ *         description: City not found
+ *         content:
+ *           application/json:
+ *             example:
+ *               {
+ *                 "message": "City not found."
+ *               }
+ *       400:
+ *         description: Invalid city ID format
+ *         content:
+ *           application/json:
+ *             example:
+ *               {
+ *                 "message": "Invalid cityId format."
+ *               }
+ * 
+ */
+router.get('/:id/stateDetails',getstate, exitPoint);
+
+/**
+ * @swagger
+ * /cities/state:
+ *   post:
+ *     tags: ['cities']
+ *     summary: Get all cities with their state information
+ *     responses:
+ *       200:
+ *         description: List of cities with state details
+ *         content:
+ *           application/json:
+ *             example:
+ *               [
+ *                 {
+ *                   "id": "1",
+ *                   "name": "City1",
+ *                   "stateDetails": {
+ *                     "id": "10",
+ *                     "name": "State1",
+ *                     "country": "Country1",
+ *                     "population": 2000000,
+ *                     "gdp": 50000
+ *                   },
+ *                   "population": 500000
+ *                 },
+ *                 {
+ *                   "id": "2",
+ *                   "name": "City2",
+ *                   "stateDetails": {
+ *                     "id": "20",
+ *                     "name": "State2",
+ *                     "country": "Country2",
+ *                     "population": 1000000,
+ *                     "gdp": 30000
+ *                   },
+ *                   "population": 300000
+ *                 }
+ *               ]
+ */
+router.post('/state',getAllstates, exitPoint);/**
+* @swagger
+* /cities/{id}/updateJoin:
+*   put:
+*     tags: ['cities']
+*     summary: Update a city's information and its associated state details
+*     parameters:
+*       - in: path
+*         name: id
+*         schema:
+*           type: string
+*         required: true
+*         description: The ID of the city to update
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             properties:
+*               city:
+*                 type: object
+*                 properties:
+*                   name:
+*                     type: string
+*                     description: The name of the city
+*                   population:
+*                     type: number
+*                     description: The population of the city
+*               stateId:
+*                 type: string
+*                 description: The ObjectId of the state that the city belongs to
+*           examples:
+*             updateExample:
+*               summary: Example update for city and state
+*               value:
+*                 city:
+*                   name: "Updated City"
+*                   population: 600000
+*                 stateId: "64f0923abcd123456789abcd"
+*     responses:
+*       200:
+*         description: City updated successfully
+*         content:
+*           application/json:
+*             example:
+*               {
+*                 "message": "City updated successfully",
+*                 "updatedCity": {
+*                   "id": "1",
+*                   "name": "Updated City",
+*                   "stateId": "64f0923abcd123456789abcd",
+*                   "population": 600000
+*                 }
+*               }
+*       400:
+*         description: Invalid stateId provided
+*         content:
+*           application/json:
+*             example:
+*               {
+*                 "message": "Invalid stateId provided."
+*               }
+*       404:
+*         description: City not found
+*         content:
+*           application/json:
+*             example:
+*               {
+*                 "message": "City not found."
+*               }
+*       500:
+*         description: Internal server error
+*         content:
+*           application/json:
+*             example:
+*               {
+*                 "message": "Error updating city",
+*                 "error": "Detailed error message"
+*               }
+* 
+*/
+
+router.put('/:id/updateJoin', updateCitys, exitPoint);
 
 
 
