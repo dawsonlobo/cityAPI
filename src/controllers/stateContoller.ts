@@ -219,6 +219,15 @@ export const getStateById = async (req: CustomRequest, res: Response, next: Next
       return next();
     }
 
+    if (state.isDeleted) {
+      req.customReq = {
+        statusCode: 400,
+        data: null,
+        message: 'State is deleted and cannot be fetched.',
+      };
+      return next();
+    }
+
     req.customReq = {
       statusCode: 200,
       data: state,
@@ -234,6 +243,7 @@ export const getStateById = async (req: CustomRequest, res: Response, next: Next
     next(err);
   }
 };
+
 
 // Update a state
 export const updateState = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {

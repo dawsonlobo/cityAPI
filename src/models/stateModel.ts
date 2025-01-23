@@ -9,7 +9,7 @@ interface IState extends Document {
 }
 
 const stateSchema: Schema = new Schema({
-  name: { type: String},
+  name: { type: String, unique: true },
   population:{type:Number},
   gdp:{type:Number},
   capital: {type:String},
