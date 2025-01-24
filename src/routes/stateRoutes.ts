@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { body, param,validationResult } from 'express-validator';
+import { body, param, validationResult } from 'express-validator';
 import {
   getAllStates,
   getStateById,
@@ -8,6 +8,7 @@ import {
 } from '../controllers/stateContoller';
 import { validateRequest } from '../middleware/validateRequest';
 import { exitPoint } from '../middleware/exitPoint';
+import passport from 'passport';
 
 const router = Router();
 
@@ -16,6 +17,8 @@ const router = Router();
  * /states/getAll:
  *   post:
  *     tags: ['states']
+ *     security:
+ *       - userAuth: []
  *     summary: Get all states with pagination, filters, and projections
  *     requestBody:
  *       required: true
@@ -124,8 +127,12 @@ const router = Router();
  *                         type: string
  *                       updatedAt:
  *                         type: string
- */
-router.post('/getAll', getAllStates, exitPoint);
+ *           401:
+ *              description: Unauthorized - Invalid token
+ */       
+router.post('/getAll', 
+  passport.authenticate('bearer', { session: false }),
+  getAllStates, exitPoint);
 
 
 /**
@@ -150,6 +157,8 @@ router.post('/getAll', getAllStates, exitPoint);
  *               { "id": "1", "name": "California", "country": "USA", "population": 39538223, "gdp": 3200000, "capital": "Sacramento" }
  *       404:
  *         description: State not found
+ *       401:
+ *         description: Unauthorized - Invalid token
  */
 router.get('/:id', getStateById, exitPoint);
 
@@ -237,9 +246,9 @@ router.get('/:id', getStateById, exitPoint);
  *                   isSuccessful: false
  *                   data: null
  *                   message: "State already exists"
- */
-
-
+ *       401:
+ *         description: Unauthorized - Invalid token
+ */  
 router.post(
   '/',
   [
@@ -268,8 +277,6 @@ router.post(
   addState,         // Proceed with adding state if validation passes
   exitPoint         // Send response based on state after adding state
 );
-
-
 
 
 /**
@@ -320,9 +327,9 @@ router.post(
  *                 summary: Example of successful state update
  *                 value:
  *                   message: "State updated successfully"
+ *       401:
+ *         description: Unauthorized - Invalid token
  */
-
-
 router.put(
   '/:id',
   [
@@ -370,14 +377,7 @@ router.put(
   ],
   validateRequest,  // Custom middleware to handle validation errors
   updateState,      // Actual logic for updating the state
-  exitPoint         // Handle custom response formatting
+  exitPoint         // Send final response (success/error)
 );
-
-
-
-
-  // Proceed to the next middleware if no errors
-
-
 
 export default router;

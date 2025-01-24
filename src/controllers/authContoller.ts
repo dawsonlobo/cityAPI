@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import passport from 'passport';
 import bcrypt from 'bcrypt';
-import User from '../models/User';
+import User from '../models/userModel';
 
 export default class AuthController {
   static register: RequestHandler = async (req: Request, res: Response): Promise<void> => {

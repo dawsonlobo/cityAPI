@@ -2,14 +2,21 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import session from 'express-session';
+import authhRoutes from './routes/authhRoutes';
 import { CustomRequest } from './interfaces/customRequest';
 //import passport from './config/passportConfig';
-import authRoutes from './routes/authRoutes';
-import { initializePassport } from './passport/bearer';
+//import authRoutes from './routes/authRoutes';
+//import { initializePassport } from './passport/bearer';
 import { swaggerSpec, swaggerUi } from './swagger';
 import userRoutes from './routes/user';
 import stateRoutes from './routes/stateRoutes'
+import './models/accessToken';
+import './models/refreshToken';
 import {CONFIG}  from  './config/config'
+import './passport/bearer'
+import passport from 'passport';
+ import { bearerStrategy } from './passport/bearer'
+//import authRoutes from './routes/authhRoutes'; 
 // Load environment variables
 dotenv.config();
 
@@ -21,10 +28,11 @@ app.use(express.json());
 // Import routes
 import cityRoutes from './routes/cityRoutes';
 
+
 // Use routes
 app.use('/cities', cityRoutes);
 app.use('/states',stateRoutes);
-app.use('/auth', authRoutes);
+app.use('/auth', authhRoutes);
 // Serve Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -54,16 +62,20 @@ app.use('/api', userRoutes);
 //   next(); // Proceed to the next middleware if customReq is not present
 // });
 // MongoDB connection
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
-// app.use(passport.initialize());
+// app.use(session({
+//   secret: process.env.SESSION_SECRET || 'your-secret-key',
+//   resave: false,
+//   saveUninitialized: false,
+//   cookie: {
+//     secure: process.env.NODE_ENV === 'production',
+//     maxAge: 24 * 60 * 60 * 1000 // 24 hours
+//   }
+// }));
+
+
+
+app.use(passport.initialize());
+passport.use(bearerStrategy);
 // app.use(passport.session());
 // initializePassport();
 // app.get('/protected', passport.authenticate('bearer', { session: false }), (req, res) => {

@@ -1,65 +1,53 @@
 import { Strategy as BearerStrategy } from 'passport-http-bearer';
-import passport from 'passport';
 import jwt from 'jsonwebtoken';
-import mongoose from 'mongoose';
-import User from '../models/User';
+import User from '../models/userModel';
 import dotenv from 'dotenv';
-
-// Load environment variables
+import Types from 'mongoose'
+import mongoose from 'mongoose';
 dotenv.config();
 
-// Secret key for JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key';
 
-const mongoURI = process.env.MONGO_URI;
-const port = process.env.PORT || 3000;
-
-if (!mongoURI) {
-  throw new Error('MongoDB URI is not defined in .env file.');
+interface CustomJwtPayload extends jwt.JwtPayload {
+  userId: string;
+  token?: string; // Optional, if you choose to include it in the JWT payload
 }
 
-
-// // Get the MongoDB URI from environment variables (with fallback)
-// const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/defaultdb';
-
-// // MongoDB connection using Mongoose
-// mongoose
-//   .connect(mongoURI)
-//   .then(() => {
-//     console.log('Connected to MongoDB');
-//     // You can start your server here if needed
-//     // app.listen(port, () => {
-//     //   console.log(`Server is running on http://localhost:${port}`);
-//     // });
-//   })
-//   .catch((err) => {
-//     console.error('Database connection error:', err);
-//   });
-
-
-// Passport Bearer Strategy configuration
 export const bearerStrategy = new BearerStrategy(async (token: string, done: (error: any, user?: any, info?: string) => void) => {
+  if (!token) {
+    console.error("Token not provided");
+    return done(null, false, 'No token provided');
+  }
+
   try {
-    // Verify the token
     jwt.verify(token, JWT_SECRET, async (err, decoded) => {
       if (err) {
+        console.error("JWT verification error:", err);
         return done(null, false, 'Invalid token');
       }
 
-      // Find the user in the database with the matching token
-      const user = await User.findOne({ token }); // Ensure the token field exists in your schema
+      // Log decoded JWT to check its structure
+      console.log("Decoded JWT:", decoded);
+
+      const decodedToken = decoded as CustomJwtPayload;
+
+      // Ensure the decoded token contains the expected fields
+      if (!decodedToken || !decodedToken.id) {
+        console.error("Decoded token is invalid or missing required fields");
+        return done(null, false, 'Invalid token');
+      }
+
+      // Find the user by the id field
+      const user = await User.findOne({ _id: new mongoose.Types.ObjectId(String(decodedToken.id)) });
       if (!user) {
+        console.error("User not found");
         return done(null, false, 'User not found');
       }
 
       return done(null, user); // Pass the user to the next middleware
     });
   } catch (error) {
+    console.error("Error in BearerStrategy:", error);
     return done(error, false, 'Error occurred while processing the token');
   }
 });
-
-// Function to initialize the Bearer strategy
-export const initializePassport = () => {
-  passport.use(bearerStrategy);
-};

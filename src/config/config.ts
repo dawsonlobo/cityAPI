@@ -3,7 +3,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 export const CONFIG={
     PORT:getProcessEnv('PORT',true),
-    MONGO_URI:getProcessEnv('MONGO_URI',true)
+    MONGO_URI:getProcessEnv('MONGO_URI',true),
+    JWT_SECRET:getProcessEnv('JWT_SECRET',true),
+    ACCESS_TOKEN_EXPIRY:process.env.ACCESS_TOKEN_EXPIRY || '7d',
+    REFRESH_TOKEN_EXPIRY: process.env.REFRESH_TOKEN_EXPIRY || '365d'
 }
 
 

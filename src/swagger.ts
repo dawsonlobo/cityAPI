@@ -16,14 +16,28 @@ const swaggerOptions: swaggerJSDoc.Options = {
     ],
     tags: [
       {
-        name: 'cities',  // This will replace 'default'
-        description: 'API endpoints for cities'
+        name: 'cities',
+        description: 'API endpoints for cities',
       },
       {
-        name: 'states',  // This will replace 'default'
-        description: 'API endpoints for states'
-      }
-    ]
+        name: 'states',
+        description: 'API endpoints for states',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        userAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [
+      {
+        userAuth: [],
+      },
+    ],
   },
   apis: ['./src/routes/*.ts'],
 };
