@@ -4,13 +4,13 @@ import {
   getCityById, 
   getCityWithProjection, 
   updateCity, 
-  addCity ,
+  addCity,
   getAllstates,
   getstate,
   updateCitys
-
 } from '../controllers/cityController';
 import { exitPoint } from '../middleware/exitPoint';
+import passport from 'passport';
 
 const router = Router();
 
@@ -19,6 +19,8 @@ const router = Router();
  * /cities/getAll:
  *   post:
  *     tags: ['cities'] 
+ *     security:
+ *       - userAuth: []
  *     summary: Get all cities with pagination, filters, and projections
  *     requestBody:
  *       required: true
@@ -127,9 +129,8 @@ const router = Router();
  *                       updatedAt:
  *                         type: string
  */
-router.post('/getAll', getAllCities, exitPoint);
-
-
+router.post('/getAll',
+  passport.authenticate('bearer', { session: false }), getAllCities, exitPoint);
 
 
 /**
@@ -137,6 +138,8 @@ router.post('/getAll', getAllCities, exitPoint);
  * /cities/{id}/:
  *   post:
  *     tags: ['cities'] 
+ *     security:
+ *       - userAuth: []
  *     summary: Get a city with projection
  *     parameters:
  *       - in: path
@@ -153,13 +156,17 @@ router.post('/getAll', getAllCities, exitPoint);
  *             example:
  *               { "id": "1", "name": "City1", "state": "State1", "population": 500000 }
  */
-router.post('/:id', getCityWithProjection, exitPoint);
+router.post('/:id',
+  passport.authenticate('bearer', { session: false }), getCityWithProjection, exitPoint);
+
 
 /**
  * @swagger
  * /cities:
  *   post:
  *     tags: ['cities'] 
+ *     security:
+ *       - userAuth: []
  *     summary: Add a new city
  *     requestBody:
  *       required: true
@@ -228,7 +235,7 @@ router.post('/:id', getCityWithProjection, exitPoint);
  *                   data: null
  *                   message: "City already exists"
  */
-router.post('/', addCity, exitPoint);
+router.post('/',passport.authenticate('bearer', { session: false }), addCity, exitPoint);
 
 
 /**
@@ -237,6 +244,8 @@ router.post('/', addCity, exitPoint);
  *   get:
  *     summary: Get a city by ID
  *     tags: ['cities'] 
+ *     security:
+ *       - userAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -254,36 +263,16 @@ router.post('/', addCity, exitPoint);
  *       404: 
  *          description: error
  */
-router.get('/:id', getCityById, exitPoint);
-// /**
-//  * @swagger
-//  * /cities/{id}:
-//  *   get:
-//  *     summary: Get city by ID
-//  *     parameters:
-//  *       - in: path
-//  *         name: id
-//  *         required: true
-//  *         schema:
-//  *           type: string
-//  *         description: The ID of the city to retrieve
-//  *     responses:
-//  *       200:
-//  *         description: City details
-//  *         content:
-//  *           application/json:
-//  *             example:
-//  *               { "id": 1, "name": "City1" }
-//  *       404:
-//  *         description: City not found
-//  */
-// router.get('/:id', getCityById, exitPoint);
+router.get('/:id',passport.authenticate('bearer', { session: false }), getCityById, exitPoint);
+
 
 /**
  * @swagger
  * /cities/{id}:
  *   put:
  *     tags: ['cities'] 
+ *     security:
+ *       - userAuth: []
  *     summary: Update a city's information
  *     parameters:
  *       - in: path
@@ -327,13 +316,15 @@ router.get('/:id', getCityById, exitPoint);
  *                 value:
  *                   message: "City updated successfully"
  */
-router.put('/:id', updateCity, exitPoint);
+router.put('/:id',passport.authenticate('bearer', { session: false }), updateCity, exitPoint);
 
 /**
  * @swagger
  * /cities/{id}/stateDetails:
  *   get:
  *     tags: ['cities']
+ *     security:
+ *       - userAuth: []
  *     summary: Get city details along with its state details
  *     parameters:
  *       - in: path
@@ -352,160 +343,79 @@ router.put('/:id', updateCity, exitPoint);
  *                 "id": "67920b929150bbf9ff76e336",
  *                 "name": "City1",
  *                 "population": 500000,
- *                 "stateDetails": {
- *                   "id": "60c72b2f9b1d8c3f8d07f1f0",
- *                   "name": "State1",
- *                   "country": "Country1",
- *                   "population": 2000000,
- *                   "gdp": 50000,
- *                   "capital": "Capital1"
- *                 }
+ *                 "state": "State1"
  *               }
- *       404:
- *         description: City not found
- *         content:
- *           application/json:
- *             example:
- *               {
- *                 "message": "City not found."
- *               }
- *       400:
- *         description: Invalid city ID format
- *         content:
- *           application/json:
- *             example:
- *               {
- *                 "message": "Invalid cityId format."
- *               }
- * 
  */
-router.get('/:id/stateDetails',getstate, exitPoint);
+router.get('/:id/stateDetails', getstate, exitPoint);
 
 /**
  * @swagger
- * /cities/state:
- *   post:
+ * /cities/stateDetails:
+ *   get:
  *     tags: ['cities']
- *     summary: Get all cities with their state information
+ *     security:
+ *       - userAuth: []
+ *     summary: Get all cities with their state details
  *     responses:
  *       200:
- *         description: List of cities with state details
+ *         description: All cities with state details
  *         content:
  *           application/json:
  *             example:
  *               [
  *                 {
- *                   "id": "1",
+ *                   "id": "67920b929150bbf9ff76e336",
  *                   "name": "City1",
- *                   "stateDetails": {
- *                     "id": "10",
- *                     "name": "State1",
- *                     "country": "Country1",
- *                     "population": 2000000,
- *                     "gdp": 50000
- *                   },
- *                   "population": 500000
+ *                   "population": 500000,
+ *                   "state": "State1"
  *                 },
  *                 {
- *                   "id": "2",
+ *                   "id": "67920b929150bbf9ff76e337",
  *                   "name": "City2",
- *                   "stateDetails": {
- *                     "id": "20",
- *                     "name": "State2",
- *                     "country": "Country2",
- *                     "population": 1000000,
- *                     "gdp": 30000
- *                   },
- *                   "population": 300000
+ *                   "population": 1000000,
+ *                   "state": "State2"
  *                 }
  *               ]
  */
-router.post('/state',getAllstates, exitPoint);
+router.get('/cities/stateDetails', getAllstates, exitPoint);
+
+
 /**
-* @swagger
-* /cities/{id}/updateJoin:
-*   put:
-*     tags: ['cities']
-*     summary: Update a city's information and its associated state details
-*     parameters:
-*       - in: path
-*         name: id
-*         schema:
-*           type: string
-*         required: true
-*         description: The ID of the city to update
-*     requestBody:
-*       required: true
-*       content:
-*         application/json:
-*           schema:
-*             type: object
-*             properties:
-*               city:
-*                 type: object
-*                 properties:
-*                   name:
-*                     type: string
-*                     description: The name of the city
-*                   population:
-*                     type: number
-*                     description: The population of the city
-*               stateId:
-*                 type: string
-*                 description: The ObjectId of the state that the city belongs to
-*           examples:
-*             updateExample:
-*               summary: Example update for city and state
-*               value:
-*                 city:
-*                   name: "Updated City"
-*                   population: 600000
-*                 stateId: "64f0923abcd123456789abcd"
-*     responses:
-*       200:
-*         description: City updated successfully
-*         content:
-*           application/json:
-*             example:
-*               {
-*                 "message": "City updated successfully",
-*                 "updatedCity": {
-*                   "id": "1",
-*                   "name": "Updated City",
-*                   "stateId": "64f0923abcd123456789abcd",
-*                   "population": 600000
-*                 }
-*               }
-*       400:
-*         description: Invalid stateId provided
-*         content:
-*           application/json:
-*             example:
-*               {
-*                 "message": "Invalid stateId provided."
-*               }
-*       404:
-*         description: City not found
-*         content:
-*           application/json:
-*             example:
-*               {
-*                 "message": "City not found."
-*               }
-*       500:
-*         description: Internal server error
-*         content:
-*           application/json:
-*             example:
-*               {
-*                 "message": "Error updating city",
-*                 "error": "Detailed error message"
-*               }
-* 
-*/
-
-router.put('/:id/updateJoin', updateCitys, exitPoint);
-
-
+ * @swagger
+ * /cities/{id}/updateJoin:
+ *   put:
+ *     tags: ['cities'] 
+ *     security:
+ *       - userAuth: []
+ *     summary: Update city and state details together
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the city
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               population:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: City and state details updated successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               { "message": "City and state details updated successfully" }
+ */
+router.put('/:id/updateJoin',passport.authenticate('bearer', { session: false }), updateCitys, exitPoint);
 
 export default router;

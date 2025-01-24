@@ -307,24 +307,36 @@ export const updateCitys = async (req: Request, res: Response): Promise<void> =>
 //[if u use get for getone ide is passed in parameter else in body]
 export const getstate = async (req: any, res: any) => {
   try {
-    const { id } = req.params; // Use 'id' instead of 'cityId'
+    const { id } = req.params; // Get the city ID from the URL parameter
     console.log('Received cityId:', id);
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid cityId format." });
     }
+
     const city = await City.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(id), isDeleted: false } },
-      { $lookup: { from: "states", localField: "stateId", foreignField: "_id", as: "stateDetails" } },
+      { 
+        $lookup: { 
+          from: "states", 
+          localField: "stateId", 
+          foreignField: "_id", 
+          as: "stateDetails" 
+        } 
+      },
       { $unwind: "$stateDetails" }
     ]);
+
     if (!city.length) {
       return res.status(404).json({ message: "City not found." });
     }
-    res.status(200).json(city[0]);
+
+    res.status(200).json(city[0]); // Return the city and its state details
   } catch (error) {
     res.status(500).json({ message: "Error fetching city", error });
   }
 };
+
 
 // Get all cities with state details
 
@@ -369,33 +381,34 @@ export const getstate = async (req: any, res: any) => {
 // };
 export const getAllstates = async (req: any, res: any) => {
   try {
+    // Fetch all cities where `isDeleted` is false
     const cities = await City.aggregate([
-      { $match: { isDeleted: false } },
-      {
-        $addFields: {
-          isValidStateId: {
-            $cond: {
-              if: { $regexMatch: { input: { $toString: "$stateId" }, regex: /^[0-9a-fA-F]{24}$/ } },
-              then: true,
-              else: false
-            }
-          }
-        }
-      }
-      ,
+      { $match: { isDeleted: false } }, // Only include cities that are not marked as deleted
       {
         $lookup: {
-          from: "states",
-          localField: "stateId",
-          foreignField: "_id",
-          as: "stateDetails"
+          from: "states", // The 'states' collection
+          localField: "stateId", // Reference field in 'City' collection
+          foreignField: "_id", // Field to match in 'State' collection
+          as: "stateDetails", // Alias for the state data
         }
       },
-      { $unwind: "$stateDetails" }
+      { $unwind: "$stateDetails" } // Unwind to get the state details as a single object (not an array)
     ]);
-    
-    res.status(200).json(cities);
+
+    // Return the list of cities with their state details
+    res.status(200).json({
+      statusCode: 200,
+      message: "Cities with their state details",
+      data: cities
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching cities", error });
+    console.error(error); // Log the error for debugging
+    res.status(500).json({
+      statusCode: 500,
+      message: "Error fetching cities with state details",
+      error: error,
+      data: null
+    });
   }
 };
+
