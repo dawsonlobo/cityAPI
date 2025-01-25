@@ -1,5 +1,31 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           description: The user's name
+ *         phone:
+ *           type: string
+ *           description: The user's phone number
+ *         password:
+ *           type: string
+ *           description: The user's password
+ *         email:
+ *           type: string
+ *           description: The user's email address (optional)
+ *       required:
+ *         - name
+ *         - phone
+ *         - password
+ */
+
+
 interface IUser extends Document {
   name: string;
   phone: string;
