@@ -4,118 +4,31 @@ import City from '../models/cityModel';
 import { CustomRequest } from '../interfaces/customRequest';
 import State from '../models/stateModel'; // Assuming the State model is defined in this file
 
-// Get all cities with optional pagination, sorting, and filters
-export const getAllCities = async (req: Request, res: Response, next: NextFunction) => {
+export const addCity = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { search, filters, fields, page = 1, limit = 10, sort } = req.body;
-
-    console.log('Received request body: ' + JSON.stringify(req.body));
-    
-    // Sanitize and validate pagination parameters
-    const pageNumber = Math.max(1, parseInt(page as any)); // Ensure page is at least 1
-    const limitNumber = Math.max(1, parseInt(limit as any)); // Ensure limit is at least 1
-    
-    // Build the search criteria for city names
-    const searchCriteria = search ? { name: { $regex: search, $options: 'i' } } : {};
-    
-    // Combine search and filter criteria
-    const filterCriteria = { ...searchCriteria, ...filters };
-
-    // Build the projection object to include only specified fields
-    const projection = Array.isArray(fields)
-      ? fields.reduce((acc: any, field: string) => {
-          acc[field] = 1;
-          return acc;
-        }, { _id: 0 }) 
-      : { _id: 0 }; // Default to excluding _id if no fields are provided
-
-    // Calculate the number of documents to skip for pagination
-    const skip = (pageNumber - 1) * limitNumber;
-
-    // Use the provided sort criteria or default to sorting by 'name'
-    const sortCriteria = sort && Array.isArray(sort) 
-      ? sort.reduce((acc: any, item: any) => {
-          const field = item[0]; // field name (e.g., "population")
-          const order = item[1]; // sort order (1 or -1)
-          acc[field] = order;
-          return acc;
-        }, {})
-      : { name: 1 }; // Default to sorting by name in ascending order
-
-    // Fetch the total count of matching documents
-    const totalCount = await City.countDocuments(filterCriteria);
-    
-    // Fetch the cities with pagination, projection, and sorting
-    const cities = await City.find(filterCriteria, projection)
-      .sort(sortCriteria)
-      .skip(skip)
-      .limit(limitNumber);
-
-    // Return the response with pagination metadata
-    res.json({
-      metadata: {
-        totalCount,
-        currentPage: pageNumber,
-        totalPages: Math.ceil(totalCount / limitNumber),
-        pageSize: cities.length,
-      },
-      cities,
-    });
-  } catch (err) {
-    next(err); // Pass errors to error handling middleware
-  }
-};
-
-// Get city by ID with projection
-export const getCityWithProjection = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const { id } = req.params;  // Get city ID from params
-
-    if (!id) {
-      req.customReq = {
-        statusCode: 400,
-        data: null,
-        message: 'City ID is required.',
-      };
-      return next();
-    }
-
-    const city = await City.aggregate([
-      { 
-        $match: { 
-          _id: new mongoose.Types.ObjectId(id),  // Match by city ID
-          isDeleted: false  // Ensure the city is not deleted
-        }
-      }
-    ]);
-
-    if (!city || city.length === 0) {
-      req.customReq = {
-        statusCode: 404,
-        data: null,
-        message: 'City not found or already deleted.',
-      };
-      return next();
-    }
-
-    req.customReq = {
-      statusCode: 200,
-      data: city[0],  // Return the first city from the aggregation result
-      message: 'City fetched successfully.',
-    };
-    next();  // Pass control to the next middleware or exit point
-  } catch (err) {
-    next(err);  // Pass any errors to error handling middleware
-  }
-};
-
-// Add a city
-export const addCity = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    // Destructure the required fields directly from the request body
     const { name, population, country, latitude, longitude } = req.body;
 
-    // Create a new City instance with the provided data
+    // Validate required fields
+    if (!name || !country) {
+     res.status(400).json({ message: 'City name and country are required.' });
+    }
+
+    // Use aggregation to check if the city already exists
+    const existingCity = await City.aggregate([
+      {
+        $match: {
+          name: { $regex: `^${name}$`, $options: 'i' }, // Case-insensitive match for the city name
+          country: { $regex: `^${country}$`, $options: 'i' }, // Match for country
+        },
+      },
+    ]);
+
+    // If the city already exists, throw an error
+    if (existingCity.length > 0) {
+       res.status(409).json({ message: 'City already exists.' });
+    }
+
+    // Create a new city document
     const newCity = new City({
       name,
       population,
@@ -127,288 +40,206 @@ export const addCity = async (req: CustomRequest, res: Response, next: NextFunct
     // Save the city to the database
     const savedCity = await newCity.save();
 
-    // Set customReq with success status, message, and saved data
-    req.customReq = {
-      statusCode: 201,
-      data: savedCity,
+    // Respond with the newly created city
+    res.status(201).json({
       message: 'City added successfully.',
-    };
-
-    next();  // Pass control to the next middleware (usually the exitPoint)
-  } catch (err) {
-    req.customReq = {
-      statusCode: 500,
-      data: null,
-      message: 'Failed to add city.',
-    };
-    next(err);  // Pass the error to error handling middleware
+      city: savedCity,
+    });
+  } catch (error) {
+    // Handle errors
+    console.error('Error adding city:', error);
+    res.status(500).json({ message: 'Internal server error.' });
   }
 };
 
-// Get a single city by ID
-export const getCityById = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
+
+export const updateCity = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const cityId = req.params.id;
+    const { stateId, isDelete, ...updateData } = req.body;
+    const { id: cityId } = req.params; // Get cityId from URL params
 
-    if (!mongoose.Types.ObjectId.isValid(cityId)) {
-      req.customReq = {
-        statusCode: 400,
-        data: null,
-        message: 'Invalid City ID format.',
-      };
-      return next();
+    // Log the cityId and isDelete to verify it's being passed correctly
+    console.log('City ID from URL:', cityId);
+    console.log('isDelete:', isDelete);
+
+    // Step 1: Validate at least one field is provided for update
+    if (!updateData && stateId === undefined && isDelete === undefined) {
+      res.status(400).json({ message: 'No valid fields provided for update.' });
     }
 
-    const city = await City.findById(cityId);
-
-    if (!city) {
-      req.customReq = {
-        statusCode: 404,
-        data: null,
-        message: 'City not found.',
-      };
-      return next();
+    // Step 2: If stateId is passed, check if it exists in the State collection
+    if (stateId) {
+      const stateExists = await State.findById(stateId);
+      if (!stateExists) {
+        res.status(400).json({ message: 'Invalid stateId provided.' });
+      }
     }
 
-    req.customReq = {
-      statusCode: 200,
-      data: city,
-      message: 'City fetched successfully.',
-    };
-    next();
-  } catch (err) {
-    req.customReq = {
-      statusCode: 500,
-      data: null,
-      message: 'Something went wrong!',
-    };
-    next(err);
-  }
-};
-
-// Update a city
-export const updateCity = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const updateData = req.body; // Get the update data from the request body
-
-    // Validate that at least one field is being updated
-    if (!updateData || Object.keys(updateData).length === 0) {
-      req.customReq = {
-        statusCode: 400,
-        data: null,
-        message: 'No valid fields provided for update.',
-      };
-      return next(); // Pass control to the next middleware
+    // Step 3: Check if the cityId exists
+    const cityExists = await City.findById(cityId);
+    if (!cityExists) {
+      console.log('City not found with ID:', cityId); // Log if city is not found
+       res.status(404).json({ message: 'City not found.' });
     }
 
-    // Find the city by ID and update the fields provided in the body
+    // Step 4: Prepare the update data
+    let updateFields: any = {};
+
+    // If fields are passed for update (other than stateId or isDelete)
+    if (Object.keys(updateData).length > 0) {
+      updateFields = { ...updateData };
+    }
+
+    // If stateId is passed, update the city's stateId
+    if (stateId) {
+      updateFields.stateId = new mongoose.Types.ObjectId(stateId); // Ensure valid ObjectId
+    }
+
+    // If isDelete is passed, ensure it's updated
+    if (isDelete !== undefined) {
+      updateFields.isDelete = isDelete; // This will ensure the isDelete field gets updated
+    }
+
+    // Log the updateFields to verify the data being sent for update
+    console.log('Update Fields:', updateFields);
+
+    // Step 5: Update the city document
     const updatedCity = await City.findByIdAndUpdate(
-      req.params.id,
-      updateData,
+      cityId,
+      updateFields,
       { new: true, runValidators: true } // Return the updated document and run schema validators
     );
 
     if (!updatedCity) {
-      req.customReq = {
-        statusCode: 404,
-        data: null,
-        message: 'City not found.',
-      };
-      return next(); // Pass control to the next middleware (error handler)
+       res.status(404).json({ message: 'City not found.' });
     }
 
-    req.customReq = {
-      statusCode: 200,
-      data: updatedCity,
+    // Step 6: Respond with the updated city details
+    res.status(200).json({
       message: 'City updated successfully.',
-    };
-    next(); // Proceed to the next middleware (success handler)
-  } catch (err) {
-    req.customReq = {
-      statusCode: 500,
-      data: null,
-      message: 'Something went wrong!',
-    };
-    next(err); // Pass error to error-handling middleware
-  }
-};
+      city: updatedCity, // Send the updated city object
+    });
 
-// Delete a city
-export const deleteCity = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const deletedCity = await City.findByIdAndDelete(req.params.id);
-    if (!deletedCity) {
-      req.customReq = {
-        statusCode: 404,
-        data: null,
-        message: 'City not found.',
-      };
-      return next();
-    }
-
-    req.customReq = {
-      statusCode: 200,
-      data: null,
-      message: 'City deleted successfully.',
-    };
-    next();
-  } catch (err) {
-    req.customReq = {
-      statusCode: 500,
-      data: null,
-      message: 'Something went wrong!',
-    };
-    next(err);
-  }
-};
-
-
-
-// Update city with stateId validation // Adjust with actual path
-// Adjust with actual path
-export const updateCitys = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { stateId, ...updateData } = req.body;
-    const { id: cityId } = req.params; // Get cityId from URL params
-
-    // Log the cityId to verify it's being passed correctly
-    console.log('City ID from URL:', cityId);
-
-    // Check if stateId exists in the State collection
-    const stateExists = await State.findById(stateId);
-    if (!stateExists) {
-      res.status(400).json({ message: "Invalid stateId provided." });
-    }
-
-    // Check if the cityId exists
-    const cityExists = await City.findById(cityId);
-    if (!cityExists) {
-      console.log('City not found with ID:', cityId); // Log if city is not found
-       res.status(404).json({ message: "City not found." });
-    }
-
-    // If the stateId exists, proceed to update the city record
-    const updatedCity = await City.findByIdAndUpdate(
-      cityId, 
-      { 
-        ...updateData, 
-        stateId: new mongoose.Types.ObjectId(stateId) // Set the new stateId
-      },
-      { new: true } // Return the updated city
-    );
-
-    // Respond with the updated city details
-    res.status(200).json(updatedCity);
   } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ message: "Error updating city", error });
+    console.error('Error updating city:', error);
+     res.status(500).json({ message: 'Error updating city', error });
   }
 };
-//[if u use get for getone ide is passed in parameter else in body]
-export const getstate = async (req: any, res: any) => {
+
+
+// Assuming the City model is defined here
+// Adjust based on your project structure
+
+export const getOne = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params; // Get the city ID from the URL parameter
-    console.log('Received cityId:', id);
+    const { id } = req.params; // Get city ID from URL params
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid cityId format." });
-    }
-
+    // Step 1: Check if the city exists
     const city = await City.aggregate([
-      { $match: { _id: new mongoose.Types.ObjectId(id), isDeleted: false } },
-      { 
-        $lookup: { 
-          from: "states", 
-          localField: "stateId", 
-          foreignField: "_id", 
-          as: "stateDetails" 
-        } 
-      },
-      { $unwind: "$stateDetails" }
-    ]);
-
-    if (!city.length) {
-      return res.status(404).json({ message: "City not found." });
-    }
-
-    res.status(200).json(city[0]); // Return the city and its state details
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching city", error });
-  }
-};
-
-
-// Get all cities with state details
-
-
-// export const getAllstates = async (req: any, res: any) => {
-//   try {
-//     const cities = await City.aggregate([
-//       { 
-//         $match: { isDeleted: false } // Only include cities that are not marked as deleted
-//       },
-//       {
-//         $addFields: {
-//           isValidStateId: {
-//             $cond: {
-//               if: { $regexMatch: { input: { $toString: "$stateId" }, regex: /^[0-9a-fA-F]{24}$/ } },
-//               then: true,
-//               else: false
-//             }
-//           }
-//         }
-//       },
-//       {
-//         $match: { isValidStateId: true } // Only include cities with valid stateId
-//       },
-//       {
-//         $lookup: {
-//           from: "states", // The 'states' collection
-//           localField: "stateId", // The reference field in 'City'
-//           foreignField: "_id", // The matching field in 'State'
-//           as: "stateDetails", // Alias for state data
-//         },
-//       },
-//       { $unwind: "$stateDetails" }, // Unwind to get state details as an object, not an array
-//     ]);
-
-//     // Return the list of cities with their state details
-//     res.status(200).json(cities); // Send all cities with state data
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Error fetching cities", error });
-//   }
-// };
-export const getAllstates = async (req: any, res: any) => {
-  try {
-    // Fetch all cities where `isDeleted` is false
-    const cities = await City.aggregate([
-      { $match: { isDeleted: false } }, // Only include cities that are not marked as deleted
+      { $match: { _id: new mongoose.Types.ObjectId(id) } },
       {
         $lookup: {
-          from: "states", // The 'states' collection
-          localField: "stateId", // Reference field in 'City' collection
-          foreignField: "_id", // Field to match in 'State' collection
-          as: "stateDetails", // Alias for the state data
-        }
+          from: 'states', // Assuming "states" is your states collection
+          localField: 'stateId', // Field in the city document that references the state
+          foreignField: '_id', // The _id field in the states collection
+          as: 'stateDetails', // Alias for the state details in the result
+        },
       },
-      { $unwind: "$stateDetails" } // Unwind to get the state details as a single object (not an array)
+      {
+        $unwind: { path: '$stateDetails', preserveNullAndEmptyArrays: true }, // Unwind the stateDetails array (it could be empty)
+      },
     ]);
 
-    // Return the list of cities with their state details
+    if (!city || city.length === 0) {
+      res.status(404).json({ message: 'City not found.' });
+    }
+
+    // Step 2: Respond with the city and state details
     res.status(200).json({
-      statusCode: 200,
-      message: "Cities with their state details",
-      data: cities
+      message: 'City data retrieved successfully.',
+      data: { city: city[0] }, // Assuming only one city is found with the given ID
     });
+
   } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({
-      statusCode: 500,
-      message: "Error fetching cities with state details",
-      error: error,
-      data: null
-    });
+    console.error('Error retrieving city:', error);
+    res.status(500).json({ message: 'Internal server error', error });
   }
 };
 
+
+
+
+ // Adjust the import based on your file structure
+ // Get all cities with optional pagination, sorting, filters, and state details
+export const getAll = async (req: CustomRequest, res: Response, next: NextFunction) => {
+  try {
+    const { search, filters, projections, page = 1, limit = 10, sort } = req.body;
+
+    console.log('Received request body: ' + JSON.stringify(req.body));
+
+    // Sanitize and validate pagination parameters
+    const pageNumber = Math.max(1, parseInt(page as any)); // Ensure page is at least 1
+    const limitNumber = Math.max(1, parseInt(limit as any)); // Ensure limit is at least 1
+
+    // Build the search criteria for city names
+    const searchCriteria = search ? { name: { $regex: search, $options: 'i' } } : {};
+
+    // Combine search and filter criteria
+    const filterCriteria = { ...searchCriteria, ...filters };
+
+    // Build the projection object to include only specified fields (projections)
+    const projection = Array.isArray(projections)
+      ? projections.reduce((acc: any, field: string) => {
+          acc[field] = 1;
+          return acc;
+        }, { _id: 0 })
+      : { _id: 0 }; // Default to excluding _id if no projections are provided
+
+    // Calculate the number of documents to skip for pagination
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Handle sorting with correct structure (array of objects)
+    const sortCriteria = sort && Array.isArray(sort)
+      ? sort.reduce((acc: any, item: any) => {
+          const field = item.field; // field name (e.g., "population")
+          const order = item.order; // sort order (1 or -1)
+          acc[field] = order;
+          return acc;
+        }, {})
+      : { name: 1 }; // Default to sorting by name in ascending order
+
+    // Perform aggregation to get cities with state details, filters, sorting, and pagination
+    const citiesWithStateDetails = await City.aggregate([
+      { $match: filterCriteria }, // Apply filters
+      {
+        $lookup: {
+          from: 'states', // Lookup from the 'states' collection
+          localField: 'stateId', // Field in 'City' to match
+          foreignField: '_id', // Field in 'State' to match
+          as: 'stateDetails', // Alias for state details
+        },
+      },
+      { $unwind: { path: '$stateDetails', preserveNullAndEmptyArrays: true } }, // Unwind state details to make it an object
+      { $project: projection }, // Include specified fields (projections)
+      { $sort: sortCriteria }, // Apply sorting
+      { $skip: skip }, // Skip for pagination
+      { $limit: limitNumber }, // Limit for pagination
+    ]);
+
+    // Fetch the total count of matching documents for pagination metadata
+    const totalCount = await City.countDocuments(filterCriteria);
+
+    // Respond with the required format
+     res.status(200).json({
+      status: 200,
+      data: {
+        totalCount,
+        tableData: citiesWithStateDetails, // Rename to tableData
+      },
+      message: 'Cities with their state details fetched successfully',
+    });
+
+  } catch (err) {
+    //next(err); // Pass errors to error handling middleware
+  }
+};

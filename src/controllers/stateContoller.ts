@@ -97,7 +97,7 @@ export const getStateWithProjection = async (req: CustomRequest, res: Response, 
 
     if (!id) {
       req.customReq = {
-        statusCode: 400,
+        status: 400,
         data: null,
         message: 'State ID is required.',
       };
@@ -115,7 +115,7 @@ export const getStateWithProjection = async (req: CustomRequest, res: Response, 
 
     if (!state || state.length === 0) {
       req.customReq = {
-        statusCode: 404,
+        status: 404,
         data: null,
         message: 'State not found or already deleted.',
       };
@@ -123,7 +123,7 @@ export const getStateWithProjection = async (req: CustomRequest, res: Response, 
     }
 
     req.customReq = {
-      statusCode: 200,
+      status: 200,
       data: state[0],  // Return the first state from the aggregation result
       message: 'State fetched successfully.',
     };
@@ -142,7 +142,7 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
   const nameResult = validationResult(req);
   if (!nameResult.isEmpty()) {
     req.customReq = {
-      statusCode: 400,
+      status: 400,
       data: 'missing input parameters',
       message: 'Name is required and must be a non-empty string.',
     };
@@ -156,7 +156,7 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
   const gdpResult = validationResult(req);
   if (!gdpResult.isEmpty()) {
     req.customReq = {
-      statusCode: 400,
+      status: 400,
       data: 'missing input parameters',
       message: 'GDP must be a valid number.',
     };
@@ -178,7 +178,7 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
     const savedState = await newState.save();
 
     req.customReq = {
-      statusCode: 200,
+      status: 200,
       data: savedState,
       message: 'State added successfully.',
     };
@@ -186,7 +186,7 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
     next();
   } catch (err) {
     req.customReq = {
-      statusCode: 500,
+      status: 500,
       data: null,
       message: 'Failed to add state.',
     };
@@ -201,7 +201,7 @@ export const getStateById = async (req: CustomRequest, res: Response, next: Next
 
     if (!mongoose.Types.ObjectId.isValid(stateId)) {
       req.customReq = {
-        statusCode: 400,
+        status: 400,
         data: null,
         message: 'Invalid State ID format.',
       };
@@ -212,7 +212,7 @@ export const getStateById = async (req: CustomRequest, res: Response, next: Next
 
     if (!state) {
       req.customReq = {
-        statusCode: 404,
+        status: 404,
         data: null,
         message: 'State not found.',
       };
@@ -221,7 +221,7 @@ export const getStateById = async (req: CustomRequest, res: Response, next: Next
 
     if (state.isDeleted) {
       req.customReq = {
-        statusCode: 400,
+        status: 400,
         data: null,
         message: 'State is deleted and cannot be fetched.',
       };
@@ -229,14 +229,14 @@ export const getStateById = async (req: CustomRequest, res: Response, next: Next
     }
 
     req.customReq = {
-      statusCode: 200,
+      status: 200,
       data: state,
       message: 'State fetched successfully.',
     };
     next();
   } catch (err) {
     req.customReq = {
-      statusCode: 500,
+      status: 500,
       data: null,
       message: 'Something went wrong!',
     };
@@ -253,7 +253,7 @@ export const updateState = async (req: CustomRequest, res: Response, next: NextF
     // Validate that at least one field is being updated
     if (!updateData || Object.keys(updateData).length === 0) {
       req.customReq = {
-        statusCode: 400,
+        status: 400,
         data: null,
         message: 'No valid fields provided for update.',
       };
@@ -269,7 +269,7 @@ export const updateState = async (req: CustomRequest, res: Response, next: NextF
 
     if (!updatedState) {
       req.customReq = {
-        statusCode: 404,
+        status: 404,
         data: null,
         message: 'State not found.',
       };
@@ -277,14 +277,14 @@ export const updateState = async (req: CustomRequest, res: Response, next: NextF
     }
 
     req.customReq = {
-      statusCode: 200,
+      status: 200,
       data: updatedState,
       message: 'State updated successfully.',
     };
     next(); // Proceed to the next middleware (success handler)
   } catch (err) {
     req.customReq = {
-      statusCode: 500,
+      status: 500,
       data: null,
       message: 'Something went wrong!',
     };
