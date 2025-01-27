@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, sendOtp, refreshToken, signup } from '../controllers/authhController';
+import { login, sendOtp, refreshToken, signup } from '../controllers/authController';
 
 const router = express.Router();
 
@@ -32,7 +32,7 @@ const router = express.Router();
  *               password:
  *                 type: string
  *                 description: User's password
- *                 example: "yourpassword123"
+ *                 example: "password123"
  *     responses:
  *       201:
  *         description: User created successfully
@@ -138,7 +138,7 @@ router.post('/login', login);
  *               refreshToken:
  *                 type: string
  *                 description: Refresh token from previous login
- *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkVCJ9..."
  *     responses:
  *       200:
  *         description: Successfully refreshed access token

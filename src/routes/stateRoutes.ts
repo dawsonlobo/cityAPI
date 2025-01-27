@@ -5,7 +5,7 @@ import {
   getStateById,
   addState,
   updateState
-} from '../controllers/stateContoller';
+} from '../controllers/stateController';
 import { validateRequest } from '../middleware/validateRequest';
 import { exitPoint } from '../middleware/exitPoint';
 import passport from 'passport';

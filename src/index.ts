@@ -2,7 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import session from 'express-session';
-import authhRoutes from './routes/authhRoutes';
+import authRoutes from './routes/authRoutes';
 import { CustomRequest } from './interfaces/customRequest';
 //import passport from './config/passportConfig';
 //import authRoutes from './routes/authRoutes';
@@ -17,7 +17,6 @@ import {CONFIG}  from  './config/config'
 import './passport/bearer'
 import passport from 'passport';
  import { bearerStrategy } from './passport/bearer'
-//import authRoutes from './routes/authhRoutes'; 
 // Load environment variables
 dotenv.config();
 
@@ -33,7 +32,7 @@ import cityRoutes from './routes/cityRoutes';
 // Use routes
 app.use('/cities', cityRoutes);
 app.use('/states',stateRoutes);
-app.use('/auth', authhRoutes);
+app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 // Serve Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

@@ -244,7 +244,7 @@ router.post('/:id', passport.authenticate('bearer', { session: false }), getOne,
  *                     role: "admin"
  *                   message: "User added successfully"
  */
-router.post('/', passport.authenticate('bearer', { session: false }),authorizeAdmin, addUser,authorizeAdmin,exitPoint);
+router.post('/', passport.authenticate('bearer', { session: false }),authorizeAdmin, addUser,exitPoint);
 
 /**
  * @swagger
