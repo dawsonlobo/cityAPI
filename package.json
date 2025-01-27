@@ -6,7 +6,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts"
+    "dev": "nodemon src/index.ts",
+    "seed:add":"ts-node src/seed/addData.ts",
+    "seed:remove":"ts-node src/seed/removeData.ts"
   },
   "keywords": [],
   "author": "",

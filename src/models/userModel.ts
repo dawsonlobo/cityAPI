@@ -26,14 +26,15 @@ import mongoose, { Document, Schema } from 'mongoose';
  */
 
 
-interface IUser extends Document {
+export interface IUser extends Document {
   name: string;
   phone: string;
   password: string;
+  email: string;
   token:string
 }
 
-const userSchema: Schema = new Schema(
+export const userSchema: Schema = new Schema(
   {
     name: {
       type: String,
