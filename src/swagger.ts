@@ -29,7 +29,8 @@ const swaggerOptions: swaggerJSDoc.Options = {
    // Will be populated from your route files
   },
   // Path to the API specs
-  apis: ['./src/routes/*.ts'], // Add your routes directory
+  apis: ['./src/routes/*.ts', './src/models/*.ts']
+ // Add your routes directory
 };
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
