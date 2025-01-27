@@ -35,7 +35,7 @@ export const sendOtp = async (req: Request, res: Response): Promise<void> => {
     });
     await otpDoc.save();
 
-    res.status(200).json({ message: 'OTP sent successfully', otp });
+    res.status(200).json({ message: 'OTP sent successfully'});
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error('Unknown error');
     res.status(500).json({ 
@@ -69,7 +69,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     const accessToken = jwt.sign(
-      { id: user._id, phone: user.phone },
+      { id: user._id, phone: user.phone, role: user.role },
       CONFIG.JWT_SECRET!,
       { expiresIn: '10d' }
     );
@@ -81,6 +81,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     );
 
     console.log('Generated Access Token:', accessToken);
+    //console.log('role':user.role)
     console.log('Generated Refresh Token:', refreshToken);
 
     const accessTokenDoc = new AccessToken({

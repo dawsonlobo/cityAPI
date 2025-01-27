@@ -8,8 +8,9 @@ import { CustomRequest } from './interfaces/customRequest';
 //import authRoutes from './routes/authRoutes';
 //import { initializePassport } from './passport/bearer';
 import { swaggerSpec, swaggerUi } from './swagger';
-import userRoutes from './routes/user';
+//import userRoutes from './routes/user';
 import stateRoutes from './routes/stateRoutes'
+import userRoutes from './routes/userRoutes'
 import './models/accessToken';
 import './models/refreshToken';
 import {CONFIG}  from  './config/config'
@@ -33,11 +34,12 @@ import cityRoutes from './routes/cityRoutes';
 app.use('/cities', cityRoutes);
 app.use('/states',stateRoutes);
 app.use('/auth', authhRoutes);
+app.use('/users', userRoutes);
 // Serve Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Use your routes
-app.use('/api', userRoutes);
+//app.use('/api', userRoutes);
 // Error handling middleware
 // app.use((err: any, req: any, res: any, next: any) => {
 //   console.error(err.stack);

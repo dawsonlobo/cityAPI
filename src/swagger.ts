@@ -23,6 +23,14 @@ const swaggerOptions: swaggerJSDoc.Options = {
         name: 'states',
         description: 'API endpoints for states',
       },
+      {
+        name: 'users',
+        description: 'API endpoints for users',
+      },
+      {
+        name: 'Auth',
+        description: 'API endpoints for authentication',
+      },
     ],
     components: {
       securitySchemes: {

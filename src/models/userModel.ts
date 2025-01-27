@@ -25,20 +25,24 @@ import mongoose, { Document, Schema } from 'mongoose';
  *         - password
  */
 
-
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin',
+}
 export interface IUser extends Document {
   name: string;
   phone: string;
   password: string;
-  email: string;
-  token:string
+  email?: string;
+  token: string;
+  role: UserRole;
 }
 
 export const userSchema: Schema = new Schema(
   {
     name: {
       type: String,
-      required: [true, 'Name is required'],  // Making the name field required
+      required: [true, 'Name is required'],
     },
     phone: {
       type: String,
@@ -50,16 +54,25 @@ export const userSchema: Schema = new Schema(
     },
     email: {
       type: String,
-      unique: true,  // Ensure email is unique
-      sparse: true,  // Allow null or missing emails
+      unique: true,
+      sparse: true,
     },
-    //token: { type: String, unique: true }
+    role: {
+      type: String,
+      enum: Object.values(UserRole),
+      default: UserRole.ADMIN,
+    },
+    token: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
-
 const User = mongoose.model<IUser>('User', userSchema);
 
 export default User;
