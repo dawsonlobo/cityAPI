@@ -6,6 +6,7 @@ import { validationResult, body } from 'express-validator';
 import { notifyAdminsAboutState } from './generic';
 import {IUser} from '../models/userModel';
 import User from '../models/userModel';
+import { notifyUser } from '../sockets/index';
 // Get all states with optional pagination, sorting, and filters
 export const getAllStates = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -167,9 +168,9 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
   // Proceed with adding the state if all validations pass
   try {
     const { name, country, population, capital, gdp } = req.body;
-    const user = req.user;
+    //const user = req.user;
     const userName  = JSON.parse(JSON.stringify(req.user));
-
+    console.log(userName)
     //const userName = req.user?.name || 'Unknown'; // Access 'name' from req.user
 
     const newState = new State({
@@ -181,9 +182,16 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
     });
 
     const savedState = await newState.save();
-    
+    const message = `${userName.name|| 'Unknown'} added a new state: ${savedState.name}`;
+     
+    const payload = {
+      stateName: savedState.name,
+      addedBy: userName.name|| 'Unknown',
+    };
+    // Notify specific user about the state addition
+    notifyUser(userName._id, 'stateAdded', payload);
     // Notify admins about the new state with the user's name
-    await notifyAdminsAboutState(savedState, userName);
+    await notifyAdminsAboutState(savedState, userName.name);
 
     req.customReq = {
       status: 200,

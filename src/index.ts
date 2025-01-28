@@ -7,7 +7,7 @@ import stateRoutes from './routes/stateRoutes';
 import userRoutes from './routes/userRoutes';
 import cityRoutes from './routes/cityRoutes';
 import authRoutes from './routes/authRoutes';
-import notificationRoutes from './routes/NotificationRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 import './models/accessToken';
 import './models/refreshToken';
 import { CONFIG } from './config/config';
@@ -15,12 +15,14 @@ import './passport/bearer';
 import passport from 'passport';
 import { bearerStrategy } from './passport/bearer';
 import { Response, NextFunction } from 'express';
-
+const http = require('http');
+import { initSocket } from './sockets'; 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-
+const server = http.createServer(app);
+initSocket(server);
 // Middleware
 app.use(express.json());
 app.use(passport.initialize());
