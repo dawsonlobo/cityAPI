@@ -250,7 +250,7 @@ router.get('/:id', getStateById, exitPoint);
  *         description: Unauthorized - Invalid token
  */  
 router.post(
-  '/',
+  '/',passport.authenticate('bearer', { session: false }),
   [
     body('name')
       .trim()

@@ -3,7 +3,9 @@ import mongoose from 'mongoose';
 import State from '../models/stateModel'; // Assuming you have a model called State
 import { CustomRequest } from '../interfaces/customRequest'; // Importing the custom request interface
 import { validationResult, body } from 'express-validator';
-
+import { notifyAdminsAboutState } from './generic';
+import {IUser} from '../models/userModel';
+import User from '../models/userModel';
 // Get all states with optional pagination, sorting, and filters
 export const getAllStates = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -133,12 +135,12 @@ export const getStateWithProjection = async (req: CustomRequest, res: Response, 
   }
 };
 
-// Add a new state
+
+
 export const addState = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
-  // First, validate the name
+  // Validate the 'name' field
   await body('name').isString().notEmpty().withMessage('Name is required').run(req);
 
-  // Check validation result for name
   const nameResult = validationResult(req);
   if (!nameResult.isEmpty()) {
     req.customReq = {
@@ -149,10 +151,9 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
     return next();
   }
 
-  // If name validation passes, move on to the next field (GDP)
+  // Validate the 'GDP' field
   await body('gdp').isNumeric().withMessage('GDP must be a valid number').run(req);
 
-  // Check validation result for GDP
   const gdpResult = validationResult(req);
   if (!gdpResult.isEmpty()) {
     req.customReq = {
@@ -163,9 +164,13 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
     return next();
   }
 
-  // If all validations pass, proceed with adding the state
+  // Proceed with adding the state if all validations pass
   try {
     const { name, country, population, capital, gdp } = req.body;
+    const user = req.user;
+    const userName  = JSON.parse(JSON.stringify(req.user));
+
+    //const userName = req.user?.name || 'Unknown'; // Access 'name' from req.user
 
     const newState = new State({
       name,
@@ -176,6 +181,9 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
     });
 
     const savedState = await newState.save();
+    
+    // Notify admins about the new state with the user's name
+    await notifyAdminsAboutState(savedState, userName);
 
     req.customReq = {
       status: 200,
@@ -193,6 +201,7 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
     next(err);
   }
 };
+
 
 // Get a single state by ID
 export const getStateById = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {

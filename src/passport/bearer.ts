@@ -43,8 +43,16 @@ export const bearerStrategy = new BearerStrategy(async (token: string, done: (er
         console.error("User not found");
         return done(null, false, 'User not found');
       }
+         // Extract the user's name from the user object
+         const userName = user.name;
 
-      return done(null, user); // Pass the user to the next middleware
+         // Add the user's name to the user object (or pass it directly)
+         const userWithName = {
+           ...user.toObject(),
+           name: userName, // Include the name in the response
+         };
+
+      return done(null, userWithName); // Pass the user to the next middleware
     });
   } catch (error) {
     console.error("Error in BearerStrategy:", error);
