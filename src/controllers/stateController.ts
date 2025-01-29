@@ -181,16 +181,15 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
       gdp,
     });
 
-    const savedState = await newState.save();
-    const message = `${userName.name|| 'Unknown'} added a new state: ${savedState.name}`;
+  const savedState = await newState.save();
+    //const message = `${userName.name|| 'Unknown'} added a new state: ${savedState.name}`;
      
     const payload = {
       stateName: savedState.name,
       addedBy: userName.name|| 'Unknown',
     };
     // Notify specific user about the state addition
-    notifyUser(userName._id, 'stateAdded', payload);
-    // Notify admins about the new state with the user's name
+    notifyUser(userName._id, 'state-ADDED', payload);
     await notifyAdminsAboutState(savedState, userName.name);
 
     req.customReq = {

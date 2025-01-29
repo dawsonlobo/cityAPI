@@ -17,12 +17,16 @@ import { bearerStrategy } from './passport/bearer';
 import { Response, NextFunction } from 'express';
 const http = require('http');
 import { initSocket } from './sockets'; 
+//import socketSetup from "./sockets/index";
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-initSocket(server);
+
+app.get("/", (req, res) => {
+  res.send("Socket server is running");
+});
 // Middleware
 app.use(express.json());
 app.use(passport.initialize());
@@ -77,5 +81,5 @@ mongoose
     console.error('Database connection error:', err);
     process.exit(1);
   });
-
+  initSocket(server);
 export default app;
