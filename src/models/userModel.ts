@@ -55,7 +55,6 @@ export const userSchema: Schema = new Schema(
     email: {
       type: String,
       unique: true,
-      sparse: true,
     },
     role: {
       type: String,

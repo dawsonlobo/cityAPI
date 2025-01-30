@@ -8,17 +8,17 @@ import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { CONFIG } from '../config/config';
 import User from '../models/userModel';
-
+import { sendEmail } from '../services/emailService';
 export const sendOtp = async (req: Request, res: Response): Promise<void> => {
-  const { phone } = req.body;
-
-  if (!phone) {
-    res.status(400).json({ message: 'Phone number is required' });
+  //const { phone } = req.body;
+  const { email } = req.body;
+  if (!email) {
+    res.status(400).json({ message: 'email is required' });
     return;
   }
 
   try {
-    const user = await User.findOne({ phone });
+    const user = await User.findOne({ email});
     if (!user) {
       res.status(400).json({ message: "User doesn't exist. Please signup." });
       return;
@@ -26,14 +26,15 @@ export const sendOtp = async (req: Request, res: Response): Promise<void> => {
 
     const otp = crypto.randomInt(1000, 9999).toString();
 
-    await Otp.deleteMany({ phone });
+    await Otp.deleteMany({ email});
 
     const otpDoc = new Otp({
-      phone,
+      email,
       otp,
       userId: new mongoose.Types.ObjectId(String(user._id)),
     });
     await otpDoc.save();
+    await sendEmail(email, 'Your OTP for Login', otp);
 
     res.status(200).json({ message: 'OTP sent successfully'});
   } catch (error: unknown) {
@@ -210,7 +211,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
 };
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
-  const { name, phone, password, token } = req.body;
+  const { name, phone, email,password, token } = req.body;
 
   // Validate if name, phone, and password are provided
   if (!name || !phone || !password) {
@@ -220,14 +221,14 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
   try {
     // Check if user already exists based on phone number
-    const existingUser = await User.findOne({ phone });
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       res.status(400).json({ message: 'User already exists.' });
       return;
     }
 
     // Create a new user with name, phone, password, and token
-    const newUser = new User({ name, phone, password, token });
+    const newUser = new User({ name, phone, password, token ,email});
     await newUser.save();
 
     res.status(201).json({ message: 'User created successfully.' });

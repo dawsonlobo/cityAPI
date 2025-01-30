@@ -1,0 +1,48 @@
+<mjml>
+  <mj-body>
+    <!-- Header Section with Logo -->
+    <mj-section background-color="#0088FF" padding="20px">
+      <mj-column>
+        <mj-image width="100px" src="https://i.imgur.com/t7NXurm.png" alt="Company Logo" />
+        <mj-text font-size="24px" font-family="Arial, sans-serif" color="#ffffff" font-weight="bold" align="center">
+          FindCity Project
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Main Content Section -->
+    <mj-section background-color="#f4f4f4" padding="20px 0">
+      <mj-column>
+        <mj-text font-size="20px" font-family="Arial, sans-serif" color="#333">
+          Dear Rakshitha,
+        </mj-text>
+        <mj-text font-size="16px" font-family="Arial, sans-serif" color="#555">
+          Here is your OTP for the FindCity project:
+        </mj-text>
+
+        <!-- Dynamic OTP Section -->
+        <mj-text align="center">
+          <span style="padding: 8px 16px; color: #0088FF; font-size: 24px; font-weight: bold; border: 2px solid #0088FF; border-radius: 4px; display: inline-block;">
+            {{otp}}
+          </span>
+        </mj-text>
+
+        <mj-text font-size="16px" font-family="Arial, sans-serif" color="#555">
+          Please use this OTP to access your account. It will expire in 10 minutes.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer Section -->
+    <mj-section background-color="#f4f4f4" padding="20px 0">
+      <mj-column>
+        <mj-text font-size="12px" font-family="Arial, sans-serif" color="#777" align="center">
+          If you did not request this OTP, please ignore this message.
+        </mj-text>
+        <mj-text font-size="12px" font-family="Arial, sans-serif" color="#777" align="center">
+          &copy; 2025 FindCityProject, All Rights Reserved.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

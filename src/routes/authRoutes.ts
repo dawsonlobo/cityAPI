@@ -48,8 +48,8 @@ router.post('/signup', signup);
  * /auth/send-otp:
  *   post:
  *     tags: ['Auth']
- *     summary: Send OTP for authentication
- *     description: Sends a one-time password (OTP) to the user's phone number for authentication.
+ *     summary: Send OTP for email-based authentication
+ *     description: Sends a one-time password (OTP) to the user's email for authentication.
  *     requestBody:
  *       required: true
  *       content:
@@ -57,21 +57,22 @@ router.post('/signup', signup);
  *           schema:
  *             type: object
  *             required:
- *               - phone
+ *               - email
  *             properties:
- *               phone:
+ *               email:
  *                 type: string
- *                 description: User's phone number
- *                 example: "1234567890"
+ *                 description: User's email address
+ *                 example: "user@example.com"
  *     responses:
  *       200:
  *         description: OTP sent successfully
  *       400:
- *         description: Invalid phone number
+ *         description: Invalid or missing email address
  *       500:
  *         description: Server error
  */
 router.post('/send-otp', sendOtp);
+
 
 /**
  * @swagger
