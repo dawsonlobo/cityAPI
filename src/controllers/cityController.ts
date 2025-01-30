@@ -48,7 +48,7 @@ export const addCity = async (req: Request, res: Response, next: NextFunction): 
   } catch (error) {
     // Handle errors
     console.error('Error adding city:', error);
-    res.status(500).json({ message: 'Internal server error.' });
+    res.status(400).json({ message: 'Internal server error.' });
   }
 };
 
@@ -122,7 +122,7 @@ export const updateCity = async (req: Request, res: Response, next: NextFunction
 
   } catch (error) {
     console.error('Error updating city:', error);
-     res.status(500).json({ message: 'Error updating city', error });
+     res.status(400).json({ message: 'Error updating city', error });
   }
 };
 
@@ -162,7 +162,7 @@ export const getOne = async (req: Request, res: Response, next: NextFunction): P
 
   } catch (error) {
     console.error('Error retrieving city:', error);
-    res.status(500).json({ message: 'Internal server error', error });
+    res.status(400).json({ message: 'Internal server error', error });
   }
 };
 

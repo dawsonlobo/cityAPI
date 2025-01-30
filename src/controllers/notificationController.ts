@@ -47,7 +47,7 @@ export const getOne = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     console.error("Error fetching notification:", error);
-    res.status(500).json({ message: "Internal server error", error });
+    res.status(400).json({ message: "Internal server error", error });
   }
 };
 
@@ -96,7 +96,7 @@ export const getAll = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     console.error("Error fetching notifications:", error);
-    res.status(500).json({ message: "Internal server error", error });
+    res.status(400).json({ message: "Internal server error", error });
   }
 };
 
@@ -131,6 +131,6 @@ export const updateMany = async (req: Request, res: Response): Promise<void> => 
     });
   } catch (error) {
     console.error("Error updating notifications:", error);
-    res.status(500).json({ message: "Internal server error", error });
+    res.status(400).json({ message: "Internal server error", error });
   }
 };

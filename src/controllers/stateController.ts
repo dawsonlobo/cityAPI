@@ -88,7 +88,7 @@ export const getAllStates = async (req: CustomRequest, res: Response, next: Next
       message: `Error fetching states: ${err || err}`,
     };
 
-    res.status(500).json(req.customReq); // Handle error with custom response
+    res.status(400).json(req.customReq); // Handle error with custom response
     next(err); // Pass errors to error handling middleware
   }
 };
@@ -201,7 +201,7 @@ export const addState = async (req: CustomRequest, res: Response, next: NextFunc
     next();
   } catch (err) {
     req.customReq = {
-      status: 500,
+      status: 400,
       data: null,
       message: 'Failed to add state.',
     };
@@ -252,7 +252,7 @@ export const getStateById = async (req: CustomRequest, res: Response, next: Next
     next();
   } catch (err) {
     req.customReq = {
-      status: 500,
+      status: 400,
       data: null,
       message: 'Something went wrong!',
     };
@@ -300,7 +300,7 @@ export const updateState = async (req: CustomRequest, res: Response, next: NextF
     next(); // Proceed to the next middleware (success handler)
   } catch (err) {
     req.customReq = {
-      status: 500,
+      status: 400,
       data: null,
       message: 'Something went wrong!',
     };

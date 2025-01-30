@@ -115,7 +115,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error('Unknown error');
-    res.status(500).json({ 
+    res.status(400).json({ 
       message: 'Error during login', 
       error: err.message 
     });
@@ -203,7 +203,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    res.status(500).json({ 
+    res.status(400).json({ 
       message: 'Error refreshing token', 
       error: err.message 
     });
@@ -234,7 +234,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     res.status(201).json({ message: 'User created successfully.' });
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error('Unknown error');
-    res.status(500).json({ 
+    res.status(400).json({ 
       message: 'Error creating user', 
       error: err.message 
     });

@@ -40,7 +40,7 @@ export const addUser = async (req: Request, res: Response, next: NextFunction): 
     });
   } catch (error) {
     console.error('Error adding user:', error);
-    res.status(500).json({ message: 'Internal server error.' });
+    res.status(400).json({ message: 'Internal server error.' });
   }
 };
 
@@ -85,7 +85,7 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
     });
   } catch (error) {
     console.error('Error updating user:', error);
-    res.status(500).json({ message: 'Internal server error.' });
+    res.status(400).json({ message: 'Internal server error.' });
   }
 };
 
@@ -106,7 +106,7 @@ export const getOne = async (req: Request, res: Response, next: NextFunction): P
     });
   } catch (error) {
     console.error('Error retrieving user:', error);
-    res.status(500).json({ message: 'Internal server error.' });
+    res.status(400).json({ message: 'Internal server error.' });
   }
 };
 
@@ -168,6 +168,6 @@ export const getAll = async (req: CustomRequest, res: Response, next: NextFuncti
     });
   } catch (err) {
     console.error('Error fetching users:', err);
-    res.status(500).json({ message: 'Internal server error.' });
+    res.status(400).json({ message: 'Internal server error.' });
   }
 };
