@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Initialize Resend with your API key
-const resendClient = new Resend(process.env.RESEND_API_KEY || 're_388FthUu_4c4zsQvdgtvc9SQyRvjrjWz');
+const resendClient = new Resend(process.env.RESEND_API_KEY );
 
 export const sendEmail = async (to: string, subject: string, otp: string): Promise<void> => {
   try {

@@ -20,7 +20,9 @@ const otpSchema = new Schema<IOtp>(
     otp: { type: String, required: true },
     createdAt: { type: Date, default: Date.now, index: { expires: 300 } }, // Expires in 5 minutes
   },
-  { timestamps: true }
+  { timestamps: true ,
+    versionKey:false
+  },
 );
 
 export const Otp = mongoose.model<IOtp>('Otp', otpSchema);
