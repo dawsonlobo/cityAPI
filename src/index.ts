@@ -6,15 +6,21 @@ import stateRoutes from './routes/stateRoutes';
 import authRoutes from './routes/authRoutes';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import './models/accessToken';
-import './models/refreshToken';
+import http from "http";
+import { Server as SocketIOServer } from 'socket.io';
 import { swaggerSpec, swaggerUi } from './swagger';
 import { CONFIG } from './config/config';
+import './models/accessToken';
+import './models/refreshToken';
+import { initializeSocket } from './sockets';
 
 dotenv.config();
 
 const app = express();
-const port = CONFIG.PORT ?? 3000; // Use PORT from .env if available
+const server = http.createServer(app);
+
+initializeSocket(server); // ✅ Initialize socket.io with the HTTP server)
+
 
 // MongoDB Connection
 mongoose
@@ -28,8 +34,9 @@ mongoose
 app.use(cors());
 
 // Middleware
-app.use(bodyParser.json());
+app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Routes
 app.use('/cities', cityRoutes);
 app.use('/states', stateRoutes); 
@@ -41,5 +48,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   res.status(500).json({ message: 'Internal server error' });
 });
 
+
 // Start the server
-app.listen(port, () => console.log(`Server is running on port ${port}`));
+server.listen(CONFIG.PORT ?? 3000, () => {
+  console.log(`🚀 Server running on http://localhost:${CONFIG.PORT ?? 3000}`);
+  console.log('✅ Socket.io initialized.');
+});
+
