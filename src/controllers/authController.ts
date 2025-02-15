@@ -9,16 +9,17 @@ import mongoose from 'mongoose';
 import { CONFIG } from '../config/config';
 import User from '../models/userModel';
 import { sendEmail } from '../services/emailService';
+import { getTwilioFunctions } from '../services/sms'
 export const sendOtp = async (req: Request, res: Response): Promise<void> => {
   //const { phone } = req.body;
-  const { email } = req.body;
-  if (!email) {
-    res.status(400).json({ message: 'email is required' });
+  const { email ,phone} = req.body;
+  if (!email || !phone ) {
+    res.status(400).json({ message: 'email and phone number are  required' });
     return;
   }
 
   try {
-    const user = await User.findOne({ email});
+    const user = await User.findOne({ email,phone});
     if (!user) {
       res.status(400).json({ message: "User doesn't exist. Please signup." });
       return;
@@ -26,7 +27,7 @@ export const sendOtp = async (req: Request, res: Response): Promise<void> => {
 
     const otp = crypto.randomInt(1000, 9999).toString();
 
-    await Otp.deleteMany({ email});
+    await Otp.deleteMany({ email,phone});
 
     const otpDoc = new Otp({
       email,
@@ -35,7 +36,21 @@ export const sendOtp = async (req: Request, res: Response): Promise<void> => {
     });
     await otpDoc.save();
     await sendEmail(email, 'Your OTP for Login', otp);
+    const twilioService = await getTwilioFunctions();
+    if (!twilioService) {
+      res.status(500).json({ message: 'SMS service provider not available' });
+      return;
+    }
 
+    // Send OTP via SMS
+    const smsResponse = await twilioService.sendSMS(phone, `Your OTP for login is: ${otp}`) as { success: boolean, error?: string };
+    const whatsappResponse = await twilioService.sendWhatsApp(phone, `Your OTP for login is: ${otp}`) as { success: boolean, error?: string };
+    if (smsResponse.success && whatsappResponse) {
+      res.status(200).json({ message: 'OTP sent successfully via Email,SMS and whatsapp' });
+    } else {
+      res.status(500).json({ message: 'Error sending OTP via SMS', error: smsResponse.error });
+    }
+    
     res.status(200).json({ message: 'OTP sent successfully'});
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error('Unknown error');

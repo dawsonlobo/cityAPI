@@ -19,6 +19,7 @@ const router = express.Router();
  *             required:
  *               - name
  *               - phone
+ *               - email
  *               - password
  *             properties:
  *               name:
@@ -29,6 +30,10 @@ const router = express.Router();
  *                 type: string
  *                 description: User's phone number
  *                 example: "1234567890"
+ *               email:
+ *                 type: string
+ *                 description: "User's description"
+ *                 example: "johndoe@example.com"
  *               password:
  *                 type: string
  *                 description: User's password
